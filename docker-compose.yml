@@ -1,0 +1,38 @@
+services:
+  qbit-lite:
+    build: .
+    image: qbit-lite:latest
+    container_name: qbit-lite
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8097}:8097"
+    volumes:
+      # Connection settings from the first-run wizard.
+      - config:/config
+      # Optional, for live "Moving NN%": qBittorrent's folders, read-only, at the
+      # SAME paths qBittorrent uses. Set the variables in .env (see README).
+      - ${QBIT_MEDIA_HOST:-./unused/media}:${QBIT_MEDIA_PATH:-/unused/media}:ro
+      - ${QBIT_INCOMPLETE_HOST:-./unused/incomplete}:${QBIT_INCOMPLETE_PATH:-/unused/incomplete}:ro
+    environment:
+      # Optional. Leave empty and use the setup wizard in the web UI instead.
+      # Setting QBIT_URL skips the wizard (see README).
+      - QBIT_URL=${QBIT_URL:-}
+      - QBIT_USERNAME=${QBIT_USERNAME:-}
+      - QBIT_PASSWORD=${QBIT_PASSWORD:-}
+      - QBIT_AUTH_BYPASS=${QBIT_AUTH_BYPASS:-false}
+    extra_hosts:
+      # Lets the container reach qBittorrent running on the same machine.
+      - "host.docker.internal:host-gateway"
+    networks:
+      - qbitlite
+
+volumes:
+  config:
+
+networks:
+  qbitlite:
+    ipam:
+      config:
+        # A fixed subnet, so that qBittorrent's whitelist keeps matching after
+        # the container is recreated. Change it if it clashes with your network.
+        - subnet: ${QBIT_LITE_SUBNET:-172.31.250.0/24}

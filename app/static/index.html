@@ -1,0 +1,995 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d0f13">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>qBit Lite</title>
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+:root{
+  --bg:#0d0f13; --panel:#15181e; --panel2:#1c2028; --line:#272c36; --text:#e9ecf2; --muted:#8a92a3;
+  --accent:#2fa4ff; --accent2:#7cc6ff; --dl:#2fa4ff; --up:#3ecf8e; --warn:#f5b84b; --bad:#ff6b6b; --stop:#8a92a3;
+  --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer}
+input[type=text],input[type=password],input[type=search],textarea,select{font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:10px 12px;width:100%;outline:none}
+input:focus,textarea:focus,select:focus{border-color:var(--accent)}
+textarea{resize:vertical;min-height:84px;font-size:13.5px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+select{appearance:none;-webkit-appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 17px) 55%,calc(100% - 12px) 55%;background-size:5px 5px;background-repeat:no-repeat;padding-right:32px}
+svg.i{width:18px;height:18px;flex:none}
+
+/* top bar */
+.top{position:sticky;top:0;z-index:20;background:#0d0f13ee;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line);padding:calc(10px + var(--safe-t)) 16px 10px}
+.top .row{display:flex;align-items:center;gap:10px;max-width:1400px;margin:0 auto}
+.brand{display:flex;align-items:center;gap:9px;font-weight:750;font-size:17px;flex:1;min-width:0}
+.brand img{width:28px;height:28px;border-radius:8px}
+.speeds{display:flex;gap:12px;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
+.speeds span{display:flex;align-items:center;gap:4px}
+.speeds .d{color:var(--dl)} .speeds .u{color:var(--up)}
+.iconbtn{background:none;border:0;color:var(--muted);padding:8px;border-radius:10px;display:inline-grid;place-items:center}
+.iconbtn:hover{background:var(--panel2);color:var(--text)}
+.iconbtn.on{color:var(--warn);background:#f5b84b1a}
+.btn{border:0;border-radius:12px;padding:11px 18px;font-weight:650;background:var(--accent);color:#fff;display:inline-flex;align-items:center;gap:7px;justify-content:center}
+.btn:hover{filter:brightness(1.08)}
+.btn:disabled{background:var(--line);color:var(--muted);cursor:default;filter:none}
+.btn.ghost{background:var(--panel2);border:1px solid var(--line);color:var(--text)}
+.btn.danger{background:#ff6b6b1f;color:var(--bad);border:1px solid #ff6b6b40}
+.btn.sm{padding:8px 13px;font-size:13.5px;border-radius:10px}
+
+/* toolbar */
+.wrap{max-width:1400px;margin:0 auto;padding:12px 16px calc(100px + var(--safe-b))}
+.filters{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;margin:0 -16px;padding-left:16px;padding-right:16px}
+.filters::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--line);background:var(--panel);border-radius:20px;padding:6px 13px;font-size:13.5px;color:var(--muted);display:flex;gap:6px;align-items:center}
+.chip b{font-weight:650;color:var(--text);font-size:12px;background:var(--panel2);border-radius:10px;padding:0 6px}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.chip.on b{background:#ffffff30;color:#fff}
+.searchrow{display:flex;gap:10px;margin:12px 0 10px;align-items:center}
+.searchrow input{flex:1}
+.searchrow select{width:auto;flex:none}
+.meta{color:var(--muted);font-size:12.5px;margin:0 2px 8px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+
+/* cards (mobile) */
+.list{display:flex;flex-direction:column;gap:8px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;cursor:pointer}
+.card:active{background:var(--panel2)}
+.card .n{font-weight:600;font-size:14.5px;word-break:break-word;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card .l1{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:7px;font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.card .l2{display:flex;gap:12px;flex-wrap:wrap;margin-top:5px;font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.bar{height:5px;background:var(--panel2);border-radius:5px;overflow:hidden;margin-top:8px}
+.bar>i{display:block;height:100%;border-radius:5px;background:var(--dl);transition:width .5s}
+.st-seed .bar>i{background:var(--up)} .st-stop .bar>i{background:var(--stop)} .st-err .bar>i{background:var(--bad)} .st-wait .bar>i{background:var(--warn)}
+.pill{font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.3px;flex:none;white-space:nowrap}
+.pill.st-dl{background:#2fa4ff22;color:var(--dl)} .pill.st-seed{background:#3ecf8e22;color:var(--up)}
+.pill.st-stop{background:#8a92a322;color:var(--muted)} .pill.st-err{background:#ff6b6b22;color:var(--bad)} .pill.st-wait{background:#f5b84b22;color:var(--warn)}
+.pill.st-move{background:#b78cff26;color:#c7a6ff}
+.st-move .bar>i{background:#b78cff}
+.bar>i.indet{background:linear-gradient(90deg,transparent,#b78cff,transparent);background-size:50% 100%;background-repeat:no-repeat;animation:indet 1.2s linear infinite}
+@keyframes indet{from{background-position:-50% 0}to{background-position:150% 0}}
+.dl{color:var(--dl)} .up{color:var(--up)}
+
+/* table (desktop) */
+table{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums;display:none}
+th{text-align:left;color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.5px;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap;cursor:pointer;user-select:none;position:sticky;top:57px;background:var(--bg)}
+th.r,td.r{text-align:right}
+th .arr{opacity:.8;margin-left:3px}
+td{padding:9px 10px;border-bottom:1px solid #1d2129;white-space:nowrap}
+tr.row{cursor:pointer}
+tr.row:hover td{background:var(--panel)}
+td.name{white-space:normal;min-width:260px;max-width:560px;font-weight:550;word-break:break-word}
+td.prog{min-width:130px}
+td.prog .bar{margin-top:0;display:inline-block;width:80px;vertical-align:middle;margin-right:8px}
+td.path{color:var(--muted);max-width:220px;overflow:hidden;text-overflow:ellipsis}
+.empty{color:var(--muted);text-align:center;padding:50px 20px}
+.empty b{display:block;color:var(--text);font-size:16px;margin-bottom:6px}
+
+@media (min-width:980px){
+  table{display:table} .list{display:none}
+  .fab{display:none !important}
+}
+@media (max-width:979px){ .addtop{display:none !important} .speeds .lbl{display:none} }
+@media (max-width:420px){ .brand span{display:none} }
+
+/* floating add button (mobile) */
+.fab{position:fixed;right:18px;bottom:calc(20px + var(--safe-b));z-index:25;width:58px;height:58px;border-radius:18px;border:0;background:var(--accent);color:#fff;box-shadow:0 10px 30px #2fa4ff55;display:grid;place-items:center}
+.fab svg{width:26px;height:26px}
+
+/* sheets */
+.ov{position:fixed;inset:0;background:#04050799;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:50;display:none;align-items:center;justify-content:center;padding:20px}
+.ov.show{display:flex}
+.sheet{background:var(--panel);border:1px solid var(--line);border-radius:18px;width:min(600px,100%);max-height:min(90vh,920px);display:flex;flex-direction:column;box-shadow:0 30px 80px #000a}
+.sheet header{display:flex;align-items:center;gap:10px;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--line)}
+.sheet header h2{margin:0;font-size:17px;word-break:break-word}
+.sheet .body{overflow:auto;padding:16px 18px}
+.sheet footer{display:flex;gap:10px;justify-content:flex-end;padding:14px 18px calc(14px + var(--safe-b));border-top:1px solid var(--line);flex-wrap:wrap}
+@media (max-width:640px){
+  .ov{padding:0;align-items:flex-end}
+  .sheet{width:100%;border-radius:18px 18px 0 0;max-height:92dvh}
+}
+.field{margin-bottom:16px}
+.field>label.l{display:block;font-weight:600;font-size:14px;margin-bottom:7px}
+.hint{color:var(--muted);font-size:12.5px;margin-top:6px}
+.tree{border:1px solid var(--line);border-radius:11px;background:var(--bg);max-height:300px;overflow:auto;margin-top:8px;padding:4px;overscroll-behavior:contain}
+.tnode{display:flex;align-items:center;border-radius:8px}
+.tnode:hover{background:var(--panel2)}
+.tnode.sel{background:#2fa4ff24}
+.tnode.sel .tname{color:var(--text);font-weight:600}
+.tnode.sel .tname svg{color:var(--accent)}
+.tchev{background:none;border:0;width:32px;height:36px;display:grid;place-items:center;color:var(--muted);flex:none;padding:0}
+.tchev svg{transition:transform .15s;width:14px;height:14px}
+.tchev.open svg{transform:rotate(90deg)}
+.tchev.leaf{visibility:hidden}
+.tname{flex:1;min-width:0;background:none;border:0;text-align:left;padding:8px 6px 8px 0;display:flex;gap:8px;align-items:center;color:#c3c9d5;font-size:14px}
+.tname svg{width:17px;height:17px;flex:none;color:#6b7385}
+.tname span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tload{color:var(--muted);font-size:12.5px;padding:7px 0}
+.pathhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+.pathhead label{font-weight:600;font-size:14px}
+.linkbtn{background:none;border:0;color:var(--accent2);font-size:13px;padding:4px 2px}
+.selpath{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px}
+.browser{border:1px solid var(--line);border-radius:13px;background:var(--bg);overflow:hidden}
+.savehere{display:flex;align-items:center;gap:9px;padding:11px 13px;background:#2fa4ff18;border-bottom:1px solid var(--line);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;color:var(--text)}
+.savehere svg{color:var(--accent);flex:none}
+.savehere span{word-break:break-all}
+.crumbs{display:flex;align-items:center;gap:2px;overflow-x:auto;scrollbar-width:none;padding:8px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+.crumbs::-webkit-scrollbar{display:none}
+.crumbs button{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:13px;color:var(--muted);flex:none}
+.crumbs button:last-child{color:var(--text);border-color:var(--accent)}
+.crumbs .sep{color:var(--muted);padding:0 2px}
+.dirs{max-height:min(46vh,380px);overflow-y:auto;overscroll-behavior:contain}
+.dir{display:flex;align-items:center;gap:12px;width:100%;min-height:50px;padding:0 14px;background:none;border:0;border-bottom:1px solid #1c2028;text-align:left;font-size:15px;color:var(--text)}
+.dir:active{background:var(--panel2)}
+@media (hover:hover){ .dir:hover{background:var(--panel2)} }
+.dir span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dir .fold{color:#6b7385;width:20px;height:20px}
+.dir .chev{color:var(--muted);width:14px;height:14px}
+.dir.up{color:var(--accent2);font-weight:600}
+.dirmsg{color:var(--muted);font-size:13.5px;padding:16px 14px}
+.newdir{width:100%;background:none;border:0;border-top:1px solid var(--line);padding:13px;color:var(--accent2);font-size:14px;font-weight:600}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.pchip{border:1px solid var(--line);background:var(--panel2);border-radius:9px;padding:5px 10px;font-size:12.5px;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pchip:hover,.pchip.on{color:var(--text);border-color:var(--accent)}
+.rowtoggle{display:flex;justify-content:space-between;align-items:center;gap:14px}
+.toggle{display:flex;align-items:center;cursor:pointer}
+.toggle input{display:none}
+.sw{position:relative;width:38px;height:22px;border-radius:22px;background:var(--line);transition:.2s;flex:none}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:.2s}
+input:checked+.sw{background:var(--accent)}
+input:checked+.sw::after{left:18px}
+.drop{display:block;border:1.5px dashed var(--line);border-radius:12px;padding:14px;text-align:center;color:var(--muted);font-size:13.5px;cursor:pointer}
+.drop.has{border-color:var(--accent);color:var(--text)}
+.drop{position:relative}
+.drop input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:7px 16px;font-size:13.5px;font-variant-numeric:tabular-nums}
+.kv dt{color:var(--muted)} .kv dd{margin:0;word-break:break-all}
+.dtabs{display:flex;gap:4px;background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:3px;margin:16px 0 14px}
+.dtabs button{flex:1;border:0;background:none;padding:8px;border-radius:8px;color:var(--muted);font-size:14px;font-weight:600}
+.dtabs button.on{background:var(--panel2);color:var(--text)}
+.dtabs b{font-size:11.5px;background:var(--panel2);border-radius:9px;padding:1px 6px;margin-left:4px;color:var(--muted)}
+.dtabs button.on b{background:var(--line);color:var(--text)}
+.peers{display:flex;flex-direction:column;gap:6px}
+.peer{background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:9px 11px;font-size:13px;font-variant-numeric:tabular-nums}
+.peer .pl1{display:flex;align-items:center;gap:8px}
+.peer .flag{font-size:16px;line-height:1}
+.peer .addr{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.peer .conn{color:var(--muted);font-size:11px;font-weight:700}
+.peer .pl2{display:flex;justify-content:space-between;gap:8px;color:var(--muted);margin-top:3px;font-size:12.5px}
+.peer .client{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.peer .flags{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;flex:none}
+.peer .pl3{display:flex;align-items:center;gap:10px;margin-top:6px;font-size:12px;color:var(--muted)}
+.peer .pl3 .bar{flex:1;margin:0;height:4px}
+.spinner{width:24px;height:24px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 10px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
+.toast{position:fixed;left:50%;top:calc(14px + var(--safe-t));transform:translate(-50%,-120px);background:var(--panel2);border:1px solid var(--line);padding:10px 16px;border-radius:12px;transition:transform .3s;z-index:90;max-width:90vw;box-shadow:0 10px 30px #0008}
+.toast.show{transform:translate(-50%,0)}
+.toast.bad{border-color:var(--bad)}
+
+/* login */
+.login{min-height:100dvh;display:grid;place-items:center;padding:24px}
+.login form{width:min(360px,100%);background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:26px}
+.login h1{margin:0 0 4px;font-size:22px;display:flex;align-items:center;gap:10px}
+.login p{color:var(--muted);margin:0 0 20px;font-size:13.5px}
+.login .field input{margin-top:0}
+
+/* first-run setup */
+.setup{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px 16px calc(24px + var(--safe-b))}
+.wiz{width:min(460px,100%);background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:26px 24px;box-shadow:0 30px 80px #0006}
+.wiz .logo{display:flex;align-items:center;gap:10px;font-weight:750;font-size:15px;color:var(--muted);margin-bottom:18px}
+.wiz .logo img{width:26px;height:26px;border-radius:7px}
+.wiz h1{margin:0 0 6px;font-size:22px;letter-spacing:-.2px}
+.wiz p.sub{color:var(--muted);margin:0 0 20px;font-size:14px}
+.steps{display:flex;gap:6px;margin-bottom:22px}
+.steps i{height:4px;flex:1;border-radius:4px;background:var(--line)}
+.steps i.on{background:var(--accent)}
+.wiz .nav{display:flex;gap:10px;margin-top:22px}
+.wiz .nav .btn{flex:1}
+.wiz .nav .btn.ghost{flex:0 0 auto}
+.opt{display:flex;gap:12px;align-items:flex-start;border:1.5px solid var(--line);border-radius:14px;padding:13px 14px;margin-bottom:10px;cursor:pointer;background:var(--bg)}
+.opt.on{border-color:var(--accent);background:#2fa4ff12}
+.opt input{margin:3px 0 0;accent-color:var(--accent);width:17px;height:17px;flex:none}
+.opt b{display:block;font-size:14.5px}
+.opt span{display:block;color:var(--muted);font-size:13px;margin-top:2px}
+.opt .tag{display:inline-block;font-size:10.5px;font-weight:700;color:var(--up);background:#3ecf8e1f;border-radius:10px;padding:1px 7px;margin-left:6px;vertical-align:1px}
+.ok{display:flex;gap:10px;align-items:center;background:#3ecf8e14;border:1px solid #3ecf8e40;color:var(--up);border-radius:12px;padding:10px 12px;font-size:13.5px;margin-bottom:16px}
+.errbox{background:#ff6b6b14;border:1px solid #ff6b6b40;color:#ffb0b0;border-radius:12px;padding:10px 12px;font-size:13.5px;margin-top:14px;line-height:1.5}
+.tips{color:var(--muted);font-size:12.5px;margin:10px 0 0;padding-left:18px;line-height:1.6}
+.tips code,.wiz code,.kv code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;background:var(--panel2);border-radius:5px;padding:1px 5px;color:var(--text)}
+details.adv{margin-top:6px;font-size:13px;color:var(--muted)}
+details.adv summary{cursor:pointer;padding:4px 0}
+details.adv input{margin-top:8px}
+.sect{font-size:13px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:22px 0 10px;font-weight:700}
+.lim{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.lim label{display:flex;flex-direction:column;gap:5px;font-size:12.5px;color:var(--muted)}
+.lim input{font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:10px 12px;width:100%;outline:none}
+.lim input:focus{border-color:var(--accent)}
+.iconbtn.auto{position:relative}
+.iconbtn.auto::after{content:"A";position:absolute;right:2px;bottom:2px;font-size:8.5px;font-weight:800;line-height:1;background:var(--panel2);color:var(--muted);border-radius:4px;padding:1px 2px}
+.scan{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:14px;padding:14px;border:1px dashed var(--line);border-radius:14px;margin-bottom:10px}
+.scan .spinner{margin:0;width:20px;height:20px;border-width:2.5px}
+.bigcheck{width:56px;height:56px;border-radius:50%;background:#3ecf8e22;color:var(--up);display:grid;place-items:center;margin:4px 0 16px}
+.bigcheck svg{width:28px;height:28px}
+.err{color:var(--bad);font-size:13px;margin-bottom:12px;min-height:18px}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="i-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-turtle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15c0-4 3.6-7 8-7s8 3 8 7H4z"/><path d="M20 15h1.5a1.5 1.5 0 0 0 0-3H20M7 15l-1 3M17 15l1 3M9 8.5 12 15l3-6.5"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5v14l12-7z"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24" fill="currentColor"><path d="M3 7a2 2 0 0 1 2-2h4.2l2 2H19a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></symbol>
+</svg>
+
+<div id="app"></div>
+
+<!-- add torrent -->
+<div class="ov" id="addOv" onclick="if(event.target===this)closeAdd()">
+  <div class="sheet">
+    <header><h2>Add torrent</h2><button class="iconbtn" onclick="closeAdd()"><svg class="i"><use href="#i-x"/></svg></button></header>
+    <div class="body" id="addBody"></div>
+    <footer><button class="btn ghost" onclick="closeAdd()">Cancel</button><button class="btn" id="addGo" onclick="submitAdd()"><svg class="i"><use href="#i-plus"/></svg>Add</button></footer>
+  </div>
+</div>
+
+<!-- details -->
+<div class="ov" id="detOv" onclick="if(event.target===this)closeDetails()">
+  <div class="sheet">
+    <header><h2 id="detTitle"></h2><button class="iconbtn" onclick="closeDetails()"><svg class="i"><use href="#i-x"/></svg></button></header>
+    <div class="body" id="detBody"></div>
+  </div>
+</div>
+
+<!-- settings -->
+<div class="ov" id="setOv" onclick="if(event.target===this)closeSettings()">
+  <div class="sheet">
+    <header><h2>Settings</h2><button class="iconbtn" onclick="closeSettings()"><svg class="i"><use href="#i-x"/></svg></button></header>
+    <div class="body" id="setBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============ helpers ============ */
+const $ = s => document.querySelector(s);
+const jsq = s => String(s ?? "").replace(/\\/g,"\\\\").replace(/'/g,"\\'").replace(/"/g,"&quot;");
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function size(b){ if(b==null||b<0) return "–"; const u=["B","KB","MB","GB","TB"]; let i=0; while(b>=1024&&i<u.length-1){b/=1024;i++;} return (i<2?b.toFixed(0):b.toFixed(b<10?2:1))+" "+u[i]; }
+const speed = b => b>0 ? size(b)+"/s" : "–";
+function eta(s){ if(s==null||s<0||s>=8640000) return "∞"; if(s<60) return s+"s"; if(s<3600) return Math.floor(s/60)+"m "+(s%60)+"s"; if(s<86400) return Math.floor(s/3600)+"h "+Math.floor(s%3600/60)+"m"; return Math.floor(s/86400)+"d "+Math.floor(s%86400/3600)+"h"; }
+function ago(ts){ if(!ts||ts<0) return "–"; return new Date(ts*1000).toLocaleString(); }
+function toast(msg, bad){ const t=$("#toast"); t.textContent=msg; t.className="toast show"+(bad?" bad":""); clearTimeout(t._h); t._h=setTimeout(()=>t.className="toast",3000); }
+
+class AuthError extends Error {}
+async function q(path, opts={}){
+  const r = await fetch("/api/v2/"+path, {credentials:"same-origin", ...opts});
+  if(r.status===403){ throw new AuthError("forbidden"); }
+  if(!r.ok) throw new Error((await r.text()) || r.statusText);
+  const ct = r.headers.get("content-type")||"";
+  return ct.includes("json") ? r.json() : r.text();
+}
+const form = obj => { const f=new URLSearchParams(); for(const k in obj) f.append(k,obj[k]); return {method:"POST",body:f}; };
+
+/* ============ state ============ */
+const S = {
+  cfg:null, torrents:{}, server:{}, categories:{}, rid:0, prefs:null, api:"2.11",
+  filter: localStorage.getItem("ql.filter")||"all", search:"",
+  sort: localStorage.getItem("ql.sort")||"added_on", desc: localStorage.getItem("ql.desc")!=="0",
+  detail:null, timer:null, detTab:"info", peers:null, peerTimer:null,
+};
+const FILTERS = [["all","All"],["downloading","Downloading"],["seeding","Seeding"],["stopped","Stopped"],["completed","Completed"],["active","Active"],["errored","Errors"]];
+const SORTS = [["added_on","Added"],["name","Name"],["size","Size"],["progress","Progress"],["dlspeed","Down speed"],["upspeed","Up speed"],["eta","ETA"],["ratio","Ratio"],["num_seeds","Seeds"]];
+
+function stInfo(t){
+  const s=t.state;
+  const map = {
+    downloading:["Downloading","st-dl"], forcedDL:["Downloading (F)","st-dl"], metaDL:["Fetching metadata","st-dl"], forcedMetaDL:["Fetching metadata","st-dl"],
+    stalledDL:["Stalled","st-wait"], queuedDL:["Queued","st-wait"], checkingDL:["Checking","st-wait"], allocating:["Allocating","st-wait"],
+    uploading:["Seeding","st-seed"], forcedUP:["Seeding (F)","st-seed"], stalledUP:["Seeding","st-seed"], queuedUP:["Queued","st-wait"], checkingUP:["Checking","st-wait"],
+    stoppedDL:["Stopped","st-stop"], pausedDL:["Stopped","st-stop"], stoppedUP:["Completed","st-stop"], pausedUP:["Completed","st-stop"],
+    checkingResumeData:["Checking","st-wait"], moving:["Moving","st-wait"], error:["Error","st-err"], missingFiles:["Missing files","st-err"],
+  };
+  return map[s] || [s||"Unknown","st-wait"];
+}
+const isStopped = t => /^(stopped|paused)/.test(t.state);
+function matches(t,f){
+  switch(f){
+    case "downloading": return /DL$|^downloading$|^allocating$/.test(t.state) && !isStopped(t);
+    case "seeding": return /^(uploading|forcedUP|stalledUP|queuedUP)$/.test(t.state);
+    case "stopped": return isStopped(t);
+    case "completed": return t.progress>=1;
+    case "active": return t.dlspeed>0 || t.upspeed>0;
+    case "errored": return t.state==="error"||t.state==="missingFiles";
+    default: return true;
+  }
+}
+
+/* ============ boot / auth ============ */
+async function boot(){
+  clearTimeout(S.timer);
+  S.cfg = await fetch("/lite/config").then(r=>r.json()).catch(()=>({configured:true}));
+  if(!S.cfg.configured) return startSetup();
+  try{
+    S.api = await q("app/webapiVersion");
+    S.prefs = await q("app/preferences");
+    S.auto = await fetch("/lite/automation").then(r=>r.json()).catch(()=>null);
+    renderShell(); poll();
+  }catch(e){
+    if(e instanceof AuthError){
+      if(S.cfg.mode==="login") return renderLogin("");
+      return renderProblem(S.cfg.mode==="bypass"
+        ? "qBittorrent asked for a login. Its whitelist for qBit Lite's network may have been removed or changed."
+        : "qBittorrent rejected the saved account. The username or password may have changed.");
+    }
+    renderProblem("Can't reach qBittorrent at "+(S.cfg.url||"")+". "+e.message);
+  }
+}
+function renderProblem(msg){
+  clearTimeout(S.timer);
+  $("#app").innerHTML = `<div class="setup"><div class="wiz">
+    <div class="logo"><img src="icon.svg" alt="">qBit Lite</div>
+    <h1>Can't connect</h1>
+    <div class="errbox" style="margin:10px 0 0">${esc(msg)}</div>
+    <div class="nav"><button class="btn ghost" onclick="boot()">Retry</button>
+    ${S.cfg.env?"":`<button class="btn" onclick="rerunSetup(true)">Run setup again</button>`}</div>
+    ${S.cfg.env?`<p class="hint">This connection is configured with environment variables (QBIT_URL…). Fix them and restart the container.</p>`:""}
+  </div></div>`;
+}
+function renderLogin(msg){
+  clearTimeout(S.timer);
+  $("#app").innerHTML = `<div class="login"><form onsubmit="doLogin(event)">
+    <h1><img src="icon.svg" width="30" height="30" style="border-radius:8px">qBit Lite</h1>
+    <p>Sign in with your qBittorrent WebUI account.</p>
+    <div class="err" id="lerr">${esc(msg||"")}</div>
+    <div class="field"><label class="l">Username</label><input type="text" id="lu" autocomplete="username" autocapitalize="off" required></div>
+    <div class="field"><label class="l">Password</label><input type="password" id="lp" autocomplete="current-password" required></div>
+    <button class="btn" style="width:100%" id="lgo">Sign in</button>
+  </form></div>`;
+}
+async function doLogin(ev){
+  ev.preventDefault();
+  $("#lgo").disabled=true; $("#lerr").textContent="";
+  try{
+    const r = await fetch("/api/v2/auth/login", {method:"POST", body:new URLSearchParams({username:$("#lu").value, password:$("#lp").value})});
+    const txt = (await r.text()).trim();
+    if(r.ok && (txt==="Ok." || txt==="")) return boot();
+    $("#lerr").textContent = r.status===429 ? txt : r.status===403 ? "Too many failed attempts: qBittorrent has temporarily blocked logins." : "Wrong username or password.";
+  }catch(e){ $("#lerr").textContent = e.message; }
+  $("#lgo").disabled=false;
+}
+async function logout(){ try{ await q("auth/logout",{method:"POST"}); }catch(e){} S.torrents={}; S.rid=0; renderLogin(""); }
+
+/* ============ first-run setup ============ */
+const W = {};
+function startSetup(){
+  clearTimeout(S.timer);
+  Object.assign(W, {step:1, url:W.url||S.cfg.suggested_url||"http://host.docker.internal:8080", open:false, version:"",
+    subnet:"", user:"", pass:"", mode:"bypass", err:"", busy:false, found:null, manual:false});
+  renderSetup(); scanQbit();
+}
+async function scanQbit(){
+  W.found=null; W.err=""; if(W.step===1) renderSetup();
+  const r = await setupCall("discover", {}).catch(()=>({ok:false}));
+  W.found = r.ok ? r.found : [];
+  if(W.found.length && !W.manual) W.url = W.found[0].url;
+  if(!W.found.length) W.manual = true;
+  if(W.step===1) renderSetup();
+}
+function pickFound(u){ W.url=u; W.manual=false; W.err=""; renderSetup(); }
+async function setupCall(step, body){
+  const r = await fetch("/lite/setup/"+step, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)});
+  return r.json().catch(()=>({ok:false, error:"Unexpected answer from qBit Lite ("+r.status+")"}));
+}
+function renderSetup(){
+  const n = W.open ? 2 : 3, at = W.step===1?1 : W.step===2?2 : W.step===3?(W.open?2:3) : n+1;
+  const dots = `<div class="steps">${Array.from({length:n},(_,i)=>`<i class="${i<at?"on":""}"></i>`).join("")}</div>`;
+  const err = W.err ? `<div class="errbox">${esc(W.err)}</div>` : "";
+  const busy = W.busy ? "disabled" : "";
+  let body = "";
+  if(W.step===1) body = `
+    <h1>Connect to qBittorrent</h1>
+    <p class="sub">${W.found===null?"Looking for qBittorrent on this server and your network…"
+      : W.found.length?`Found ${W.found.length===1?"qBittorrent":W.found.length+" qBittorrent servers"}. Pick one, or enter another address.`
+      : "No qBittorrent found automatically. Enter the address of its Web UI, as seen from the qBit Lite container."}</p>
+    ${W.found===null?`<div class="scan"><div class="spinner"></div>Scanning…</div>`:""}
+    ${(W.found||[]).map(f=>`<label class="opt ${!W.manual&&W.url===f.url?"on":""}"><input type="radio" name="qb" ${!W.manual&&W.url===f.url?"checked":""} onchange="pickFound('${jsq(f.url)}')"><div><b>${esc(f.label)}</b><span>${esc(f.url)} · ${f.version?esc(f.version)+" · no login needed":"login required"}</span></div></label>`).join("")}
+    ${W.found&&W.found.length?`<label class="opt ${W.manual?"on":""}"><input type="radio" name="qb" ${W.manual?"checked":""} onchange="W.manual=true;W.err='';renderSetup();$('#wUrl').focus()"><div><b>Another address</b><span>Enter it yourself</span></div></label>`:""}
+    <form onsubmit="event.preventDefault();setupTest()">
+      <div ${W.manual?"":`style="display:none"`}><div class="field"><label class="l">Web UI address</label>
+        <input type="text" id="wUrl" value="${esc(W.url)}" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="url" placeholder="http://192.168.1.10:8080"></div>
+      <ul class="tips">
+        <li>Same machine, qBittorrent with host networking: <code>http://host.docker.internal:8080</code></li>
+        <li>qBittorrent in another container on the same network: <code>http://qbittorrent:8080</code></li>
+        <li>Another computer: <code>http://its-ip:8080</code></li>
+        <li>The Web UI must be on: qBittorrent → Options → Web UI.</li>
+      </ul></div>
+      ${err}
+      <div class="nav">${W.found!==null?`<button type="button" class="btn ghost" onclick="scanQbit()">Scan again</button>`:""}<button class="btn" ${busy||(W.found===null&&!W.manual)?"disabled":""}>${W.busy?"Checking…":"Continue"}</button></div>
+    </form>`;
+  else if(W.step===2) body = `
+    <h1>Sign in to qBittorrent</h1>
+    <p class="sub">Use your qBittorrent Web UI account. It's used to set up access and is only stored if you choose so in the next step.</p>
+    <div class="ok"><svg class="i"><use href="#i-check"/></svg>Found qBittorrent at ${esc(W.url)}</div>
+    <form onsubmit="event.preventDefault();setupLogin()">
+      <div class="field"><label class="l">Username</label><input type="text" id="wUser" value="${esc(W.user)}" autocomplete="username" autocapitalize="off" required></div>
+      <div class="field"><label class="l">Password</label><input type="password" id="wPass" value="${esc(W.pass)}" autocomplete="current-password" required></div>
+      ${err}
+      <div class="nav"><button type="button" class="btn ghost" onclick="W.step=1;W.err='';renderSetup()">Back</button><button class="btn" ${busy}>${W.busy?"Signing in…":"Continue"}</button></div>
+    </form>`;
+  else if(W.step===3 && W.open) body = `
+    <h1>Almost done</h1>
+    <p class="sub">qBittorrent ${esc(W.version)} lets qBit Lite in without a login already, so there's nothing else to set up.</p>
+    <div class="ok"><svg class="i"><use href="#i-check"/></svg>Connected to ${esc(W.url)}</div>
+    <p class="hint">Anyone who can open qBit Lite can control qBittorrent. Keep it on your local network.</p>
+    ${err}
+    <div class="nav"><button class="btn ghost" onclick="W.step=1;W.open=false;W.err='';renderSetup()">Back</button><button class="btn" ${busy} onclick="setupFinish()">${W.busy?"Saving…":"Finish"}</button></div>`;
+  else if(W.step===3){
+    const opt = (m,title,desc,tag) => `<label class="opt ${W.mode===m?"on":""}"><input type="radio" name="mode" ${W.mode===m?"checked":""} onchange="W.mode='${m}';W.err='';renderSetup()"><div><b>${title}${tag?`<em class="tag">${tag}</em>`:""}</b><span>${desc}</span></div></label>`;
+    body = `
+    <h1>How should qBit Lite sign in?</h1>
+    <p class="sub">Choose what happens when someone opens qBit Lite.</p>
+    ${opt("bypass","No login","qBit Lite adds its own network to qBittorrent's “Bypass authentication” whitelist. Your password isn't stored anywhere.","Recommended")}
+    ${W.mode==="bypass"?`<details class="adv" ${W.err&&W.subnetTried?"open":""}><summary>Network to whitelist: <code>${esc(W.subnet||"?")}</code></summary>
+      <input type="text" id="wSubnet" value="${esc(W.subnet)}" autocapitalize="off" spellcheck="false" oninput="W.subnet=this.value.trim()">
+      <div class="hint">Detected automatically. Change it only if qBittorrent sees qBit Lite from another address.</div></details>`:""}
+    ${opt("credentials","Remember my account","qBit Lite stores your qBittorrent username and password in its config volume and signs in by itself.")}
+    ${opt("login","Ask for a login","Every browser signs in with the qBittorrent account, like qBittorrent's own Web UI.")}
+    ${W.mode!=="login"?`<p class="hint">With the first two, anyone who can open qBit Lite can control qBittorrent. Keep it on your local network.</p>`:""}
+    ${err}
+    <div class="nav"><button class="btn ghost" onclick="W.step=2;W.err='';renderSetup()">Back</button><button class="btn" ${busy} onclick="setupFinish()">${W.busy?"Saving…":"Finish"}</button></div>`;
+  }
+  else body = `
+    <div class="bigcheck"><svg><use href="#i-check"/></svg></div>
+    <h1>You're all set</h1>
+    <p class="sub">${W.mode==="login"?"qBit Lite is connected. You'll sign in with your qBittorrent account."
+      : W.mode==="credentials"?"qBit Lite is connected and signs in to qBittorrent by itself."
+      : "qBit Lite is connected, no login needed."}</p>
+    <p class="hint">You can change this later from the ⚙︎ Settings button.</p>
+    <div class="nav"><button class="btn" onclick="boot()">Open qBit Lite</button></div>`;
+  $("#app").innerHTML = `<div class="setup"><div class="wiz"><div class="logo"><img src="icon.svg" alt="">qBit Lite</div>${W.step<4?dots:""}${body}</div></div>`;
+  if(W.step===2 && !W.busy) (W.user ? $("#wPass") : $("#wUser")).focus();
+}
+async function setupTest(){
+  W.url = $("#wUrl").value.trim().replace(/\/+$/,"");
+  if(W.url && !/^https?:\/\//i.test(W.url)) W.url = "http://"+W.url;
+  W.busy=true; W.err=""; renderSetup();
+  const r = await setupCall("test", {url:W.url});
+  W.busy=false;
+  if(!r.ok){ W.err = r.error; return renderSetup(); }
+  W.subnet = r.subnet||""; W.open = r.open; W.version = r.version||"";
+  W.step = r.open ? 3 : 2; renderSetup();
+}
+async function setupLogin(){
+  W.user=$("#wUser").value; W.pass=$("#wPass").value;
+  W.busy=true; W.err=""; renderSetup();
+  const r = await setupCall("login", {url:W.url, username:W.user, password:W.pass});
+  W.busy=false;
+  if(!r.ok){ W.err=r.error; return renderSetup(); }
+  if(r.subnet) W.subnet=r.subnet;
+  W.step=3; renderSetup();
+}
+async function setupFinish(){
+  W.busy=true; W.err=""; W.subnetTried = W.mode==="bypass"; renderSetup();
+  const r = await setupCall("finish", {url:W.url, mode:W.open?"open":W.mode, username:W.user, password:W.pass, subnet:W.subnet});
+  W.busy=false;
+  if(!r.ok){ W.err=r.error; return renderSetup(); }
+  if(W.open) W.mode="bypass";
+  W.pass=""; W.step=4; renderSetup();
+}
+async function rerunSetup(skipConfirm){
+  if(!skipConfirm && !confirm("Disconnect qBit Lite and run the setup again? Torrents and qBittorrent's settings aren't touched.")) return;
+  const r = await setupCall("reset", {});
+  if(!r.ok) return toast(r.error||"Couldn't reset", true);
+  closeSettings(); W.url = S.cfg.url; S.torrents={}; S.rid=0; boot();
+}
+
+/* ============ settings ============ */
+function openSettings(){
+  $("#setBody").innerHTML = `<div id="setSpeed"><div class="scan"><div class="spinner"></div>Loading…</div></div>
+    <h3 class="sect">Connection</h3><div id="setConn"></div>`;
+  renderConn();
+  $("#setOv").classList.add("show");
+  loadSpeed();
+  if(!S.appVersion) q("app/version").then(v=>{ S.appVersion=String(v).trim(); if($("#setConn")) renderConn(); }).catch(()=>{});
+}
+function renderConn(){
+  const c=S.cfg, modes={bypass:"No login (whitelisted network)", credentials:"Saved qBittorrent account", login:"Each browser signs in"};
+  $("#setConn").innerHTML = `
+    <dl class="kv">
+      <dt>qBittorrent</dt><dd>${esc(c.url)}</dd>
+      <dt>Version</dt><dd>${esc(S.appVersion || "–")} · Web API ${esc(S.api)}</dd>
+      <dt>Sign-in</dt><dd>${modes[c.mode]||c.mode}</dd>
+      ${c.subnet?`<dt>Whitelisted</dt><dd><code>${esc(c.subnet)}</code></dd>`:""}
+      <dt>qBit Lite</dt><dd>${esc(c.version)}</dd>
+    </dl>
+    ${c.env?`<p class="hint" style="margin-top:16px">These settings come from environment variables (QBIT_URL…). Change them in your compose file and restart the container.</p>`
+      :`<div class="actions"><button class="btn ghost" style="grid-column:1/-1" onclick="rerunSetup()">Run setup again</button>`
+       +(c.mode==="login"?`<button class="btn ghost" style="grid-column:1/-1" onclick="closeSettings();logout()">Sign out</button>`:"")+`</div>`}
+    ${c.mode==="bypass"&&!c.env?`<p class="hint" style="margin-top:14px">Running the setup again doesn't remove ${esc(c.subnet||"the network")} from qBittorrent's whitelist. Remove it in qBittorrent → Options → Web UI if you no longer want it.</p>`:""}`;
+}
+/* Speed limits (stored in qBittorrent) and the turtle automation (stored in qBit Lite). */
+const MB = 1048576;
+const toMB = b => b>0 ? +(b/MB).toFixed(2) : "";
+async function loadSpeed(){
+  try{
+    const [p, a] = await Promise.all([q("app/preferences"), fetch("/lite/automation").then(r=>r.json())]);
+    S.prefs = p; S.auto = a; renderSpeed();
+  }catch(e){ $("#setSpeed").innerHTML = `<div class="errbox">${esc(e.message)}</div>`; }
+}
+function autoStatus(a){
+  const st=a.status||{};
+  if(!a.enabled) return "";
+  if(st.error) return `<div class="errbox" style="margin-top:10px">${esc(st.error)}</div>`;
+  if(!st.checked) return `<p class="hint">Starting…</p>`;
+  return `<p class="hint">Now: ${st.downloading?`${st.downloading} downloading`:"nothing downloading"} · turtle mode ${st.turtle?"on":"off"}</p>`;
+}
+function renderSpeed(){
+  const p=S.prefs, a=S.auto, sel=(id,v,opts)=>`<select id="${id}" onchange="saveAuto()">${opts.map(([k,l])=>`<option value="${k}" ${+v===k?"selected":""}>${l}</option>`).join("")}</select>`;
+  $("#setSpeed").innerHTML = `
+    <h3 class="sect" style="margin-top:0">Speed limits</h3>
+    <div class="lim">
+      <label>Upload<input type="number" id="limUp" min="0" step="0.5" inputmode="decimal" value="${toMB(p.up_limit)}" placeholder="Unlimited"></label>
+      <label>Download<input type="number" id="limDl" min="0" step="0.5" inputmode="decimal" value="${toMB(p.dl_limit)}" placeholder="Unlimited"></label>
+    </div>
+    <div class="l" style="margin:12px 0 6px;font-weight:600;font-size:14px;display:flex;align-items:center;gap:6px"><svg class="i" style="width:16px;height:16px"><use href="#i-turtle"/></svg>Turtle mode</div>
+    <div class="lim">
+      <label>Upload<input type="number" id="limAUp" min="0" step="0.5" inputmode="decimal" value="${toMB(p.alt_up_limit)}" placeholder="Unlimited"></label>
+      <label>Download<input type="number" id="limADl" min="0" step="0.5" inputmode="decimal" value="${toMB(p.alt_dl_limit)}" placeholder="Unlimited"></label>
+    </div>
+    <p class="hint">MB/s. Leave empty for unlimited.</p>
+    <button class="btn ghost sm" onclick="saveLimits()" style="margin-top:4px">Save limits</button>
+    <div class="field rowtoggle" style="margin-top:18px"><div><label class="l" style="margin:0">Turtle mode while downloading</label>
+      <div class="hint" style="margin-top:2px">Turns turtle mode on while something downloads, and off when nothing has downloaded for a while.</div></div>
+      <label class="toggle"><input type="checkbox" id="autoOn" ${a.enabled?"checked":""} ${a.supported?"":"disabled"} onchange="saveAuto()"><span class="sw"></span></label></div>
+    ${!a.supported?`<p class="hint">Available with “No login” or “Remember my account” sign-in, because qBit Lite has to reach qBittorrent by itself.</p>`:""}
+    ${a.enabled?`<div class="lim">
+      <label>Check every${sel("autoInt",a.interval,[[10,"10 seconds"],[30,"30 seconds"],[60,"1 minute"]])}</label>
+      <label>Turn off after${sel("autoOff",a.off_delay,[[60,"1 min idle"],[120,"2 min idle"],[300,"5 min idle"]])}</label>
+    </div>`:""}
+    <div id="autoSt">${autoStatus(a)}</div>`;
+}
+async function saveLimits(){
+  const b = id => { const v=parseFloat($(id).value); return v>0 ? Math.round(v*MB) : 0; };
+  try{
+    await q("app/setPreferences", form({json:JSON.stringify({up_limit:b("#limUp"), dl_limit:b("#limDl"), alt_up_limit:b("#limAUp"), alt_dl_limit:b("#limADl")})}));
+    toast("Limits saved"); loadSpeed();
+  }catch(e){ toast(e.message,true); }
+}
+async function saveAuto(){
+  const body={enabled:$("#autoOn").checked};
+  if($("#autoInt")){ body.interval=+$("#autoInt").value; body.off_delay=+$("#autoOff").value; }
+  const r = await fetch("/lite/automation",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}).then(r=>r.json()).catch(e=>({ok:false,error:e.message}));
+  if(!r.ok) return toast(r.error||"Couldn't save",true);
+  S.auto=r; renderSpeed();
+  if(r.enabled) setTimeout(()=>fetch("/lite/automation").then(r=>r.json()).then(a=>{ S.auto=a; if($("#autoSt")) $("#autoSt").innerHTML=autoStatus(a); }),2500);
+}
+function closeSettings(){ $("#setOv").classList.remove("show"); }
+
+/* ============ polling ============ */
+async function poll(){
+  clearTimeout(S.timer);
+  try{
+    const d = await q("sync/maindata?rid="+S.rid);
+    if(d.full_update){ S.torrents={}; S.categories={}; }
+    for(const [h,t] of Object.entries(d.torrents||{})) S.torrents[h] = Object.assign(S.torrents[h]||{hash:h}, t);
+    for(const h of d.torrents_removed||[]) delete S.torrents[h];
+    if(d.categories) for(const [k,v] of Object.entries(d.categories)) S.categories[k] = Object.assign(S.categories[k]||{}, v);
+    for(const c of d.categories_removed||[]) delete S.categories[c];
+    if(d.server_state) Object.assign(S.server, d.server_state);
+    S.rid = d.rid;
+    await pollMoves();
+    renderTop(); renderList();
+    if(S.detail) renderDetails();
+  }catch(e){
+    if(e instanceof AuthError) return renderLogin("Your session expired. Please sign in again.");
+  }
+  const moving = Object.values(S.torrents).some(t=>t.state==="moving");
+  S.timer = setTimeout(poll, document.hidden ? 10000 : moving ? 1000 : 2000);
+}
+document.addEventListener("visibilitychange", ()=>{ if(!document.hidden && $(".top")) poll(); });
+
+/* qBittorrent doesn't report move progress; the server measures the files that
+   already reached the destination folder. */
+S.moves = {};
+async function pollMoves(){
+  const hs = Object.values(S.torrents).filter(t=>t.state==="moving").map(t=>t.hash);
+  for(const h in S.moves) if(!hs.includes(h)) delete S.moves[h];
+  if(!hs.length) return;
+  try{
+    const r = await fetch("/lite/moves?hashes="+hs.join(","), {credentials:"same-origin"}).then(r=>r.json());
+    const now = Date.now();
+    for(const h of hs){
+      const m = r[h]; if(!m) continue;
+      const prev = S.moves[h];
+      if(prev && prev.known && m.known && now>prev.t){
+        const inst = Math.max(0, (m.done-prev.done)/((now-prev.t)/1000));
+        m.speed = prev.speed ? prev.speed*0.6 + inst*0.4 : inst;
+      }
+      m.t = now; S.moves[h] = m;
+    }
+  }catch(e){}
+}
+function moveInfo(t){
+  if(t.state!=="moving") return null;
+  const m = S.moves[t.hash];
+  if(!m || !m.known) return {pct:null, text:"Moving…"};
+  const pct = Math.min(100, m.progress*100);
+  const left = m.speed>0 ? (m.total-m.done)/m.speed : null;
+  return {pct, text:`Moving ${pct.toFixed(0)}% · ${size(m.done)} / ${size(m.total)}${m.speed>0?` · ${speed(m.speed)}`:""}${left!=null?` · ${eta(Math.round(left))} left`:""}`};
+}
+
+/* ============ main UI ============ */
+function renderShell(){
+  $("#app").innerHTML = `
+    <div class="top"><div class="row">
+      <div class="brand"><img src="icon.svg" alt=""><span>qBit Lite</span></div>
+      <div class="speeds" id="speeds"></div>
+      <button class="iconbtn" id="turtle" onclick="toggleAlt()" title="Alternative speed limits"><svg class="i"><use href="#i-turtle"/></svg></button>
+      <button class="btn sm addtop" onclick="openAdd()"><svg class="i"><use href="#i-plus"/></svg>Add</button>
+      <button class="iconbtn" onclick="openSettings()" title="Settings"><svg class="i"><use href="#i-gear"/></svg></button>
+    </div></div>
+    <div class="wrap">
+      <div class="filters" id="filters"></div>
+      <div class="searchrow">
+        <input type="search" placeholder="Search torrents" value="${esc(S.search)}" oninput="S.search=this.value;renderList()">
+        <select id="sortSel" onchange="setSort(this.value)">${SORTS.map(([k,l])=>`<option value="${k}" ${S.sort===k?"selected":""}>${l}</option>`).join("")}</select>
+        <button class="iconbtn" onclick="setSort(S.sort,true)" title="Reverse order" id="dirBtn"></button>
+      </div>
+      <div class="meta" id="meta"></div>
+      <div class="list" id="cards"></div>
+      <table><thead><tr id="thead"></tr></thead><tbody id="tbody"></tbody></table>
+    </div>
+    <button class="fab" onclick="openAdd()" aria-label="Add torrent"><svg><use href="#i-plus"/></svg></button>`;
+}
+function renderTop(){
+  const s=S.server;
+  $("#speeds").innerHTML = `<span class="d"><svg class="i" style="width:14px;height:14px"><use href="#i-down"/></svg>${speed(s.dl_info_speed)}</span><span class="u"><svg class="i" style="width:14px;height:14px"><use href="#i-up"/></svg>${speed(s.up_info_speed)}</span>`;
+  $("#turtle").classList.toggle("on", !!s.use_alt_speed_limits);
+  $("#turtle").classList.toggle("auto", !!(S.auto && S.auto.enabled));
+  $("#turtle").title = (s.use_alt_speed_limits?"Turtle mode on":"Turtle mode off")+(S.auto&&S.auto.enabled?" · switched automatically while downloading":"");
+  const all = Object.values(S.torrents);
+  $("#filters").innerHTML = FILTERS.map(([k,l])=>`<button class="chip ${S.filter===k?"on":""}" onclick="setFilter('${k}')">${l} <b>${all.filter(t=>matches(t,k)).length}</b></button>`).join("");
+}
+function setFilter(f){ S.filter=f; localStorage.setItem("ql.filter",f); renderTop(); renderList(); }
+function setSort(k, flip){
+  if(flip) S.desc=!S.desc;
+  else if(k!==S.sort){ S.sort=k; S.desc = !["name","eta","save_path","state"].includes(k); }
+  saveSort();
+}
+function saveSort(){
+  localStorage.setItem("ql.sort",S.sort); localStorage.setItem("ql.desc",S.desc?"1":"0");
+  const sel=$("#sortSel"); if(sel) sel.value=S.sort;
+  renderList();
+}
+function sorted(){
+  const q = S.search.trim().toLowerCase();
+  const list = Object.values(S.torrents).filter(t=>matches(t,S.filter) && (!q || (t.name||"").toLowerCase().includes(q)));
+  const k=S.sort, dir=S.desc?-1:1;
+  list.sort((a,b)=>{
+    let x=a[k], y=b[k];
+    if(k==="eta"){ x = x>=8640000?Infinity:x; y = y>=8640000?Infinity:y; }
+    if(typeof x==="string") return dir*x.localeCompare(y||"");
+    return dir*((x??0)-(y??0));
+  });
+  return list;
+}
+const COLS = [["name","Name"],["size","Size","r"],["progress","Progress"],["state","Status"],["dlspeed","Down","r"],["upspeed","Up","r"],["eta","ETA","r"],["num_seeds","Seeds","r"],["num_leechs","Peers","r"],["ratio","Ratio","r"],["save_path","Path"]];
+function renderList(){
+  if(!$("#cards")) return;
+  const list = sorted();
+  $("#dirBtn").innerHTML = `<svg class="i"><use href="#i-${S.desc?"down":"up"}"/></svg>`;
+  const s=S.server;
+  $("#meta").innerHTML = `<span>${list.length} torrent${list.length===1?"":"s"}</span><span>Free space: ${size(s.free_space_on_disk)}</span>`;
+  if(!list.length){
+    const none = !Object.keys(S.torrents).length;
+    $("#cards").innerHTML = $("#tbody").innerHTML = "";
+    $("#cards").innerHTML = `<div class="empty"><b>${none?"No torrents yet":"Nothing here"}</b>${none?"Tap + to add a .torrent file.":"No torrents match this filter."}</div>`;
+    $("#tbody").innerHTML = `<tr><td colspan="${COLS.length}">${$("#cards").innerHTML}</td></tr>`;
+  } else {
+    $("#cards").innerHTML = list.map(cardHtml).join("");
+    $("#tbody").innerHTML = list.map(rowHtml).join("");
+  }
+  $("#thead").innerHTML = COLS.map(([k,l,c])=>`<th class="${c||""}" onclick="thSort('${k}')">${l}${S.sort===k?`<span class="arr">${S.desc?"↓":"↑"}</span>`:""}</th>`).join("");
+}
+function thSort(k){ setSort(k, S.sort===k); }
+function cardHtml(t){
+  const mv = moveInfo(t);
+  if(mv) return `<div class="card st-move" onclick="openDetails('${t.hash}')">
+    <div class="n">${esc(t.name)}</div>
+    <div class="l1"><span>${esc(mv.text)}</span><span class="pill st-move">${mv.pct!=null?`Moving ${mv.pct.toFixed(0)}%`:"Moving"}</span></div>
+    <div class="bar"><i class="${mv.pct==null?"indet":""}" style="width:${mv.pct??100}%"></i></div>
+    <div class="l2"><span>→ ${esc(t.save_path)}</span></div>
+  </div>`;
+  const [label,cls]=stInfo(t), pct=(t.progress*100);
+  const done = t.progress>=1;
+  return `<div class="card ${cls}" onclick="openDetails('${t.hash}')">
+    <div class="n">${esc(t.name)}</div>
+    <div class="l1"><span>${done?size(t.size):`${size(t.completed)} / ${size(t.size)}`} · ${pct.toFixed(pct<100?1:0)}%</span><span class="pill ${cls}">${label}</span></div>
+    <div class="bar"><i style="width:${pct}%"></i></div>
+    <div class="l2">
+      ${t.dlspeed>0?`<span class="dl">↓ ${speed(t.dlspeed)}</span>`:""}${t.upspeed>0?`<span class="up">↑ ${speed(t.upspeed)}</span>`:""}
+      ${!done && !isStopped(t)?`<span>ETA ${eta(t.eta)}</span>`:""}
+      <span>Seeds ${t.num_seeds}/${t.num_complete<0?"?":t.num_complete}</span><span>Peers ${t.num_leechs}/${t.num_incomplete<0?"?":t.num_incomplete}</span>
+      ${done?`<span>Ratio ${(+t.ratio).toFixed(2)}</span>`:""}
+    </div>
+  </div>`;
+}
+function rowHtml(t){
+  let [label,cls]=stInfo(t), pct=t.progress*100;
+  const mv = moveInfo(t);
+  if(mv){ cls="st-move"; label = mv.pct!=null?`Moving ${mv.pct.toFixed(0)}%`:"Moving"; pct = mv.pct ?? 100; }
+  return `<tr class="row ${cls}" onclick="openDetails('${t.hash}')">
+    <td class="name">${esc(t.name)}</td><td class="r">${size(t.size)}</td>
+    <td class="prog"><div class="bar"><i class="${mv&&mv.pct==null?"indet":""}" style="width:${pct}%"></i></div>${pct.toFixed(pct<100?1:0)}%</td>
+    <td><span class="pill ${cls}" ${mv?`title="${esc(mv.text)}"`:""}>${label}</span></td>
+    <td class="r dl">${t.dlspeed>0?speed(t.dlspeed):""}</td><td class="r up">${t.upspeed>0?speed(t.upspeed):""}</td>
+    <td class="r">${t.progress<1&&!isStopped(t)?eta(t.eta):""}</td>
+    <td class="r">${t.num_seeds} (${t.num_complete<0?"?":t.num_complete})</td><td class="r">${t.num_leechs} (${t.num_incomplete<0?"?":t.num_incomplete})</td>
+    <td class="r">${(+t.ratio).toFixed(2)}</td><td class="path" title="${esc(t.save_path)}">${esc(t.save_path)}</td>
+  </tr>`;
+}
+
+/* ============ actions ============ */
+const v5 = () => { const [a,b]=String(S.api).split(".").map(Number); return a>2 || (a===2 && b>=11); };
+async function act(hashes, what){
+  const ep = {start: v5()?"start":"resume", stop: v5()?"stop":"pause", reannounce:"reannounce", recheck:"recheck"}[what];
+  try{ await q("torrents/"+ep, form({hashes})); toast({start:"Started",stop:"Stopped",reannounce:"Reannounced to trackers",recheck:"Recheck started"}[what]); poll(); }
+  catch(e){ toast(e.message,true); }
+}
+async function del(hash, files){
+  const t=S.torrents[hash];
+  if(!confirm(files ? `Delete "${t.name}" AND its downloaded files? This cannot be undone.` : `Remove "${t.name}" from qBittorrent? Downloaded files are kept.`)) return;
+  try{ await q("torrents/delete", form({hashes:hash, deleteFiles:files?"true":"false"})); closeDetails(); toast("Removed"); poll(); }
+  catch(e){ toast(e.message,true); }
+}
+async function toggleAlt(){ try{ await q("transfer/toggleSpeedLimitsMode",{method:"POST"}); poll(); toast(S.server.use_alt_speed_limits?"Normal speed limits":"Alternative speed limits on"); }catch(e){ toast(e.message,true); } }
+
+/* ============ details ============ */
+function openDetails(h){ S.detail=h; S.detTab="info"; S.peers=null; renderDetails(true); $("#detOv").classList.add("show"); $("#detBody").scrollTop=0; }
+function closeDetails(){ S.detail=null; S.peers=null; clearTimeout(S.peerTimer); $("#detOv").classList.remove("show"); }
+function setDetTab(tab){ S.detTab=tab; renderDetails(true); $("#detBody").scrollTop=0; if(tab==="peers") pollPeers(); }
+async function pollPeers(){
+  clearTimeout(S.peerTimer);
+  const h=S.detail; if(!h || S.detTab!=="peers") return;
+  try{
+    const d = await q("sync/torrentPeers?hash="+h+"&rid=0");
+    if(S.detail!==h) return;
+    S.peers = Object.entries(d.peers||{}).map(([k,p])=>({addr:k,...p}));
+    renderDetails();
+  }catch(e){ if(S.detail===h){ S.peers=S.peers||[]; } }
+  S.peerTimer = setTimeout(pollPeers, document.hidden?10000:2000);
+}
+const flag = cc => cc && cc.length===2 ? String.fromCodePoint(...[...cc.toUpperCase()].map(c=>0x1F1E6+c.charCodeAt(0)-65)) : "🌐";
+function peersHtml(){
+  if(S.peers==null) return `<div class="empty"><div class="spinner"></div>Loading peers…</div>`;
+  if(!S.peers.length) return `<div class="empty"><b>No connected peers</b>qBittorrent isn't connected to anyone for this torrent right now.</div>`;
+  const list=[...S.peers].sort((a,b)=>(b.dl_speed+b.up_speed)-(a.dl_speed+a.up_speed) || b.progress-a.progress);
+  const dl=list.reduce((a,p)=>a+p.dl_speed,0), ul=list.reduce((a,p)=>a+p.up_speed,0);
+  const seeds=list.filter(p=>p.progress>=1).length;
+  return `<div class="meta" style="margin:0 0 10px"><span>${list.length} connected · ${seeds} seed${seeds===1?"":"s"}</span><span><span class="dl">↓ ${speed(dl)}</span> · <span class="up">↑ ${speed(ul)}</span></span></div>
+    <div class="peers">${list.map(p=>`
+      <div class="peer">
+        <div class="pl1"><span class="flag" title="${esc(p.country||"")}">${flag(p.country_code)}</span><span class="addr">${esc(p.addr)}</span><span class="conn">${esc(p.connection||"")}</span></div>
+        <div class="pl2"><span class="client">${esc(p.client||"Unknown client")}</span>${p.flags?`<span class="flags" title="${esc(p.flags_desc||"")}">${esc(p.flags)}</span>`:""}</div>
+        <div class="pl3"><div class="bar"><i style="width:${p.progress*100}%;background:${p.progress>=1?"var(--up)":"var(--dl)"}"></i></div><span>${(p.progress*100).toFixed(p.progress>=1?0:1)}%</span>
+          <span class="dl">${p.dl_speed>0?"↓ "+speed(p.dl_speed):""}</span><span class="up">${p.up_speed>0?"↑ "+speed(p.up_speed):""}</span></div>
+      </div>`).join("")}</div>`;
+}
+// Re-rendering replaces the buttons; skip it while a tap/click is in progress
+// so the press isn't lost, and catch up right after.
+let pressing=false;
+document.addEventListener("pointerdown", e=>{ if(e.target.closest("#detBody")) pressing=true; }, true);
+document.addEventListener("pointerup", ()=>{ if(pressing) setTimeout(()=>{ pressing=false; }, 250); }, true);
+document.addEventListener("pointercancel", ()=>{ pressing=false; }, true);
+function renderDetails(force){
+  if(pressing && !force) return;
+  const t=S.torrents[S.detail]; if(!t){ closeDetails(); return; }
+  const [label,cls]=stInfo(t), pct=t.progress*100, stopped=isStopped(t);
+  const body=$("#detBody"), scroll=body.scrollTop;
+  $("#detTitle").textContent = t.name;
+  const tabs = `<div class="dtabs"><button class="${S.detTab==="info"?"on":""}" onclick="setDetTab('info')">Info</button><button class="${S.detTab==="peers"?"on":""}" onclick="setDetTab('peers')">Peers <b>${t.num_seeds+t.num_leechs}</b></button></div>`;
+  const mv = moveInfo(t);
+  const head = mv ? `
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span class="pill st-move">Moving</span><b style="font-variant-numeric:tabular-nums">${mv.pct!=null?mv.pct.toFixed(1)+"%":""}</b></div>
+    <div class="st-move"><div class="bar" style="height:7px"><i class="${mv.pct==null?"indet":""}" style="width:${mv.pct??100}%"></i></div></div>
+    <div class="hint">${esc(mv.text)} → ${esc(t.save_path)}</div>` : `
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span class="pill ${cls}">${label}</span><b style="font-variant-numeric:tabular-nums">${pct.toFixed(1)}%</b></div>
+    <div class="${cls}"><div class="bar" style="height:7px"><i style="width:${pct}%"></i></div></div>`;
+  if(S.detTab==="peers"){ body.innerHTML = head + tabs + peersHtml(); body.scrollTop=scroll; return; }
+  body.innerHTML = head + `
+    <div class="actions">
+      ${stopped?`<button class="btn" onclick="act('${t.hash}','start')"><svg class="i"><use href="#i-play"/></svg>Start</button>`
+               :`<button class="btn ghost" onclick="act('${t.hash}','stop')"><svg class="i"><use href="#i-pause"/></svg>Stop</button>`}
+      <button class="btn ghost" onclick="act('${t.hash}','reannounce')">Reannounce</button>
+      <button class="btn ghost" onclick="act('${t.hash}','recheck')">Force recheck</button>
+      <button class="btn danger" onclick="del('${t.hash}',false)">Remove</button>
+      <button class="btn danger" style="grid-column:1/-1" onclick="del('${t.hash}',true)">Delete with files</button>
+    </div>` + tabs + `
+    <dl class="kv">
+      <dt>Size</dt><dd>${size(t.completed)} / ${size(t.size)}</dd>
+      <dt>Down</dt><dd class="dl">${speed(t.dlspeed)} · total ${size(t.downloaded)}</dd>
+      <dt>Up</dt><dd class="up">${speed(t.upspeed)} · total ${size(t.uploaded)}</dd>
+      <dt>ETA</dt><dd>${t.progress<1?eta(t.eta):"–"}</dd>
+      <dt>Ratio</dt><dd>${(+t.ratio).toFixed(3)}</dd>
+      <dt>Seeds</dt><dd>${t.num_seeds} connected · ${t.num_complete<0?"?":t.num_complete} in swarm</dd>
+      <dt>Peers</dt><dd>${t.num_leechs} connected · ${t.num_incomplete<0?"?":t.num_incomplete} in swarm</dd>
+      <dt>Save path</dt><dd>${esc(t.save_path)}</dd>
+      ${t.download_path?`<dt>Incomplete</dt><dd>${esc(t.download_path)}</dd>`:""}
+      ${t.category?`<dt>Category</dt><dd>${esc(t.category)}</dd>`:""}
+      <dt>Added</dt><dd>${ago(t.added_on)}</dd>
+      ${t.completion_on>0?`<dt>Completed</dt><dd>${ago(t.completion_on)}</dd>`:""}
+      <dt>Tracker</dt><dd>${esc(t.tracker||"–")}</dd>
+      <dt>Hash</dt><dd style="font-family:ui-monospace,Menlo,monospace;font-size:12px">${t.hash}</dd>
+    </dl>`;
+  body.scrollTop=scroll;
+}
+
+/* ============ add ============ */
+const add = { files:[], savepath:"", useInc:false, incpath:"", category:"", stopped:false };
+function recentPaths(){
+  const count={};
+  for(const t of Object.values(S.torrents)) if(t.save_path) count[t.save_path]=(count[t.save_path]||0)+1;
+  const def = S.prefs?.save_path;
+  const list = Object.entries(count).sort((a,b)=>b[1]-a[1]).map(x=>x[0]);
+  if(def) list.unshift(def);
+  return [...new Set(list.map(p=>p.replace(/\/+$/,"")||"/"))].slice(0,8);
+}
+function openAdd(){
+  const last = JSON.parse(localStorage.getItem("ql.add")||"{}");
+  add.files=[];
+  add.savepath = (last.savepath || S.prefs?.save_path || "").replace(/\/+$/,"");
+  add.useInc = last.useInc ?? !!S.prefs?.temp_path_enabled;
+  add.incpath = (last.incpath || S.prefs?.temp_path || "").replace(/\/+$/,"");
+  add.category = last.category || "";
+  add.stopped = !!last.stopped;
+  dirs.cache = {};
+  renderAdd();
+  $("#addOv").classList.add("show");
+}
+function closeAdd(){ $("#addOv").classList.remove("show"); }
+
+/* ---------- folder browser: drill down one level at a time (lists folders through
+   qBittorrent, so paths are exactly what qBittorrent sees) ---------- */
+const dirs = { cache:{} };
+function dirRoot(key){
+  const p = key==="savepath" ? (S.prefs?.save_path||"/media") : (S.prefs?.temp_path||"/incomplete");
+  return "/"+(p.split("/").filter(Boolean)[0]||"");
+}
+async function listDir(path){
+  if(Array.isArray(dirs.cache[path])) return dirs.cache[path];
+  try{
+    const r = await q("app/getDirectoryContent?dirPath="+encodeURIComponent(path)+"&mode=dirs");
+    dirs.cache[path] = (Array.isArray(r)?r:[]).filter(x=>!x.split("/").pop().startsWith("."))
+      .sort((a,b)=>a.localeCompare(b,undefined,{sensitivity:"base",numeric:true}));
+  }catch(e){ dirs.cache[path]=[]; }
+  return dirs.cache[path];
+}
+function curDir(key){
+  const root=dirRoot(key); let p=(add[key]||"").replace(/\/+$/,"");
+  return (p===root || p.startsWith(root+"/")) ? p : root;
+}
+async function goDir(key, path){
+  add[key]=path; drawBrowser(key);
+  const el=$("#dirs-"+key); if(el) el.scrollTop=0;
+  await listDir(path); drawBrowser(key);
+}
+function drawBrowser(key){
+  const box=$("#br-"+key); if(!box) return;
+  const root=dirRoot(key), cur=curDir(key);
+  const segs=cur.slice(root.length).split("/").filter(Boolean);
+  let acc=root;
+  const crumbs=[`<button type="button" onclick="goDir('${key}','${jsq(root)}')">${esc(root.slice(1))}</button>`]
+    .concat(segs.map(s=>{ acc+="/"+s; return `<span class="sep">›</span><button type="button" onclick="goDir('${key}','${jsq(acc)}')">${esc(s)}</button>`; }));
+  const kids=dirs.cache[cur];
+  const up = cur!==root ? cur.slice(0,cur.lastIndexOf("/")) : null;
+  let list;
+  if(!Array.isArray(kids)){ list=`<div class="dirmsg">Loading…</div>`; listDir(cur).then(()=>drawBrowser(key)); }
+  else list = (up?`<button type="button" class="dir up" onclick="goDir('${key}','${jsq(up)}')"><svg class="i"><use href="#i-back"/></svg><span>Back</span></button>`:"")
+    + (kids.length ? kids.map(k=>`<button type="button" class="dir" onclick="goDir('${key}','${jsq(k)}')"><svg class="i fold"><use href="#i-folder"/></svg><span>${esc(k.split("/").pop())}</span><svg class="i chev"><use href="#i-chev"/></svg></button>`).join("")
+                   : `<div class="dirmsg">No subfolders. Files will be saved right here.</div>`);
+  box.innerHTML = `
+    <div class="savehere"><svg class="i"><use href="#i-folder"/></svg><span>${esc(cur)}</span></div>
+    <div class="crumbs" id="cr-${key}">${crumbs.join("")}</div>
+    <div class="dirs" id="dirs-${key}">${list}</div>
+    <button type="button" class="newdir" onclick="newFolder('${key}')">+ New folder here</button>`;
+  const cr=$("#cr-"+key); if(cr) cr.scrollLeft=cr.scrollWidth;
+  document.querySelectorAll(".pchip").forEach(c=>c.classList.toggle("on", c.dataset.p===add.savepath));
+}
+function newFolder(key){
+  const name = prompt("New folder name (qBittorrent creates it when the download starts):");
+  if(!name || !name.trim()) return;
+  const cur=curDir(key), path=cur+"/"+name.trim().replace(/[\/\\]+/g," ");
+  dirs.cache[path]=[]; (dirs.cache[cur]||=[]).push(path);
+  goDir(key, path);
+}
+function renderAdd(){
+  const cats = Object.keys(S.categories).sort();
+  $("#addBody").innerHTML = `
+    <div class="field"><label class="drop ${add.files.length?"has":""}"><input type="file" multiple onchange="pickFiles(this)">
+      <svg class="i" style="width:26px;height:26px;margin-bottom:4px"><use href="#i-plus"/></svg><br>
+      ${add.files.length ? add.files.map(f=>esc(f.name)).join("<br>") : "Choose .torrent files"}</label></div>
+    <div class="field"><label class="l">Save to</label>
+      <div class="browser" id="br-savepath"></div>
+      ${recentPaths().length?`<div class="hint" style="margin-top:10px">Recent</div><div class="chips" style="margin-top:6px">${recentPaths().map(p=>`<button type="button" class="pchip ${p===add.savepath?"on":""}" data-p="${esc(p)}" onclick="goDir('savepath','${jsq(p)}')">${esc(p)}</button>`).join("")}</div>`:""}</div>
+    <div class="field rowtoggle"><div><label class="l" style="margin:0">Use incomplete folder</label><div class="hint" style="margin-top:2px">Download here first, move to “Save to” when done.</div></div>
+      <label class="toggle"><input type="checkbox" ${add.useInc?"checked":""} onchange="add.useInc=this.checked;renderAdd()"><span class="sw"></span></label></div>
+    ${add.useInc?`<div class="field"><div class="browser" id="br-incpath"></div></div>`:""}
+    ${cats.length?`<div class="field"><label class="l">Category</label><select onchange="add.category=this.value"><option value="">None</option>${cats.map(c=>`<option ${c===add.category?"selected":""}>${esc(c)}</option>`).join("")}</select></div>`:""}
+    <div class="field rowtoggle"><label class="l" style="margin:0">Add stopped</label>
+      <label class="toggle"><input type="checkbox" ${add.stopped?"checked":""} onchange="add.stopped=this.checked"><span class="sw"></span></label></div>`;
+  drawBrowser("savepath"); drawBrowser("incpath");
+}
+/* No "accept" filter on the input: iOS greys out .torrent files (no system type for
+   them) and Android pickers hide them (they come as application/octet-stream).
+   Check the files here instead. */
+function pickFiles(inp){
+  const all=[...inp.files], ok=all.filter(f=>/\.torrent$/i.test(f.name));
+  if(all.length && !ok.length) toast("That isn't a .torrent file", true);
+  else if(ok.length<all.length) toast(`Skipped ${all.length-ok.length} file(s) that aren't .torrent`, true);
+  if(ok.length) add.files=ok;
+  const st=$("#addBody").scrollTop; renderAdd(); $("#addBody").scrollTop=st;
+}
+async function submitAdd(){
+  if(!add.files.length) return toast("Choose a .torrent file", true);
+  const save=curDir("savepath"), inc=curDir("incpath");
+  const fd = new FormData();
+  for(const f of add.files) fd.append("torrents", f, f.name);
+  fd.append("savepath", save);
+  fd.append("autoTMM","false");
+  if(add.useInc){ fd.append("useDownloadPath","true"); fd.append("downloadPath", inc); }
+  else fd.append("useDownloadPath","false");
+  if(add.category) fd.append("category", add.category);
+  fd.append("stopped", add.stopped?"true":"false"); fd.append("paused", add.stopped?"true":"false");
+  $("#addGo").disabled=true;
+  try{
+    const r = await q("torrents/add", {method:"POST", body:fd});
+    // qBittorrent < 5.2 answers "Ok." / "Fails.", newer versions a JSON summary.
+    if(String(r).trim()==="Fails." || (r && r.failure_count>0 && !r.success_count && !r.pending_count))
+      throw new Error("qBittorrent rejected the torrent (invalid or already added)");
+    localStorage.setItem("ql.add", JSON.stringify({savepath:save, useInc:add.useInc, incpath:inc, category:add.category, stopped:add.stopped}));
+    const n = add.files.length;
+    toast(`Added ${n} torrent${n>1?"s":""}`); closeAdd(); S.rid=0; poll();
+  }catch(e){ if(e instanceof AuthError) return renderLogin("Your session expired. Please sign in again."); toast(e.message,true); }
+  $("#addGo").disabled=false;
+}
+
+boot();
+</script>
+</body>
+</html>
