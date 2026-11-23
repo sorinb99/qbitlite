@@ -293,7 +293,7 @@ _files_cache = {}
 
 def qbit_json(path, cookie):
     h = {"Cookie": cookie} if cookie else {}
-    status, _, data = qbit_request("GET", path, None, h)
+    status, _, data = qbit_request("GET", path, None, h, timeout=15)
     if status != 200:
         raise PermissionError(status)
     return json.loads(data)
@@ -640,7 +640,14 @@ class Handler(BaseHTTPRequestHandler):
     def proxy(self, method):
         body = self.read_body() or None
         path = urlparse(self.path).path
-        mode = settings()["mode"]
+        cfg = settings()
+        if not cfg:
+            return self.send_json({"error": "not set up"}, 503)
+        mode = cfg["mode"]
+        # GETs are small; a slow answer means qBittorrent is stalled (for
+        # example while it copies a large move between disks). Fail fast so
+        # the UI can say so, instead of hanging for a minute.
+        timeout = 15 if method == "GET" else 60
         is_login = path == "/api/v2/auth/login"
 
         if is_login and recent_failures() >= MAX_FAILS:
@@ -660,14 +667,16 @@ class Handler(BaseHTTPRequestHandler):
             fwd["Cookie"] = self.headers["Cookie"]
 
         try:
-            status, headers, data = qbit_request(method, self.path, body, fwd)
+            status, headers, data = qbit_request(method, self.path, body, fwd, timeout=timeout)
             if server_mode and status == 403:
                 sid = server_sid(refresh=True)
                 if sid:
                     fwd["Cookie"] = sid
-                    status, headers, data = qbit_request(method, self.path, body, fwd)
+                    status, headers, data = qbit_request(method, self.path, body, fwd, timeout=timeout)
+        except TimeoutError:
+            return self.send_bytes(504, f"qBittorrent at {cfg['url']} is not responding.".encode(), "text/plain")
         except (OSError, http.client.HTTPException) as e:
-            return self.send_bytes(502, f"Cannot reach qBittorrent at {settings()['url']}: {e}".encode(), "text/plain")
+            return self.send_bytes(502, f"Cannot reach qBittorrent at {cfg['url']}: {e}".encode(), "text/plain")
 
         if is_login:
             with _fails_lock:

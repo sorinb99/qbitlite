@@ -188,6 +188,8 @@ input:checked+.sw::after{left:18px}
 .spinner{width:24px;height:24px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 10px}
 @keyframes spin{to{transform:rotate(360deg)}}
 .actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
+.busy{background:#f5b84b14;border:1px solid #f5b84b55;color:var(--text,#e8ebf1);border-radius:12px;padding:10px 14px;margin:0 0 10px;font-size:13px;line-height:1.45}
+.busy b{color:var(--warn)}
 .toast{position:fixed;left:50%;top:calc(14px + var(--safe-t));transform:translate(-50%,-120px);background:var(--panel2);border:1px solid var(--line);padding:10px 16px;border-radius:12px;transition:transform .3s;z-index:90;max-width:90vw;box-shadow:0 10px 30px #0008}
 .toast.show{transform:translate(-50%,0)}
 .toast.bad{border-color:var(--bad)}
@@ -300,7 +302,7 @@ class AuthError extends Error {}
 async function q(path, opts={}){
   const r = await fetch("/api/v2/"+path, {credentials:"same-origin", ...opts});
   if(r.status===403){ throw new AuthError("forbidden"); }
-  if(!r.ok) throw new Error((await r.text()) || r.statusText);
+  if(!r.ok){ const e=new Error((await r.text()) || r.statusText); e.status=r.status; throw e; }
   const ct = r.headers.get("content-type")||"";
   return ct.includes("json") ? r.json() : r.text();
 }
@@ -356,6 +358,11 @@ async function boot(){
       return renderProblem(S.cfg.mode==="bypass"
         ? "qBittorrent asked for a login. Its whitelist for qBit Lite's network may have been removed or changed."
         : "qBittorrent rejected the saved account. The username or password may have changed.");
+    }
+    if(e.status===504){
+      renderProblem(e.message+" It may be busy, for example copying a large move between disks. Retrying every 10 seconds; there's no need to run the setup again.");
+      S.timer = setTimeout(boot, 10000);
+      return;
     }
     renderProblem("Can't reach qBittorrent at "+(S.cfg.url||"")+". "+e.message);
   }
@@ -614,15 +621,31 @@ async function poll(){
     if(d.server_state) Object.assign(S.server, d.server_state);
     S.rid = d.rid;
     await pollMoves();
+    S.busySince = 0; setBusy(false);
     renderTop(); renderList();
     if(S.detail) renderDetails();
   }catch(e){
     if(e instanceof AuthError) return renderLogin("Your session expired. Please sign in again.");
+    setBusy(true, e);
   }
   const moving = Object.values(S.torrents).some(t=>t.state==="moving");
   S.timer = setTimeout(poll, document.hidden ? 10000 : moving ? 1000 : 2000);
 }
 document.addEventListener("visibilitychange", ()=>{ if(!document.hidden && $(".top")) poll(); });
+/* qBittorrent can stop answering for minutes while it copies a large move
+   between disks. Keep the last list on screen and say what's going on. */
+function setBusy(on, e){
+  S.busy = on;
+  const b = $("#busy"); if(!b) return;
+  if(!on){ b.hidden = true; return; }
+  const since = S.busySince = S.busySince || Date.now();
+  const mins = Math.floor((Date.now()-since)/60000);
+  const moving = Object.values(S.torrents).some(t=>t.state==="moving");
+  b.hidden = false;
+  b.innerHTML = `<b>${e && e.status===502 ? "Can't reach qBittorrent" : "qBittorrent isn't responding"}</b>${mins?` · ${mins} min`:""}<br>`
+    + (moving ? "It's probably busy copying the moved files between disks. The list will update when it's done."
+              : "It may be busy or restarting. Retrying…");
+}
 
 /* qBittorrent doesn't report move progress; the server measures the files that
    already reached the destination folder. */
@@ -671,6 +694,7 @@ function renderShell(){
         <select id="sortSel" onchange="setSort(this.value)">${SORTS.map(([k,l])=>`<option value="${k}" ${S.sort===k?"selected":""}>${l}</option>`).join("")}</select>
         <button class="iconbtn" onclick="setSort(S.sort,true)" title="Reverse order" id="dirBtn"></button>
       </div>
+      <div class="busy" id="busy" hidden></div>
       <div class="meta" id="meta"></div>
       <div class="list" id="cards"></div>
       <table><thead><tr id="thead"></tr></thead><tbody id="tbody"></tbody></table>
