@@ -175,6 +175,7 @@ input:checked+.sw::after{left:18px}
 .drop input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
 .kv{display:grid;grid-template-columns:auto 1fr;gap:7px 16px;font-size:13.5px;font-variant-numeric:tabular-nums}
 .kv dt{color:var(--muted)} .kv dd{margin:0;word-break:break-all}
+.kv dd .muted{color:var(--muted);font-size:12.5px} .kv dd code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px}
 .dtabs{display:flex;gap:4px;background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:3px;margin:16px 0 14px}
 .dtabs button{flex:1;border:0;background:none;padding:8px;border-radius:8px;color:var(--muted);font-size:14px;font-weight:600}
 .dtabs button.on{background:var(--panel2);color:var(--text)}
@@ -303,6 +304,19 @@ const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt
 function size(b){ if(b==null||b<0) return "–"; const u=["B","KB","MB","GB","TB"]; let i=0; while(b>=1024&&i<u.length-1){b/=1024;i++;} return (i<2?b.toFixed(0):b.toFixed(b<10?2:1))+" "+u[i]; }
 const speed = b => b>0 ? size(b)+"/s" : "–";
 function eta(s){ if(s==null||s<0||s>=8640000) return "∞"; if(s<60) return s+"s"; if(s<3600) return Math.floor(s/60)+"m "+(s%60)+"s"; if(s<86400) return Math.floor(s/3600)+"h "+Math.floor(s%3600/60)+"m"; return Math.floor(s/86400)+"d "+Math.floor(s%86400/3600)+"h"; }
+/* Where a torrent downloads: through the incomplete folder (qBittorrent's
+   download_path) or straight to the save path, and where its files are now. */
+function dlRoute(t){
+  const inc=(t.download_path||"").replace(/\/+$/,"");
+  if(!inc) return `<b>Directly to the save path</b>`;
+  const there = t.content_path && (t.content_path===inc || t.content_path.startsWith(inc+"/"));
+  let now;
+  if(t.state==="moving") now = `Moving to ${esc(t.save_path)} now`;
+  else if(t.progress<1) now = `Downloading here; moved to the save path when finished`;
+  else if(there) now = `Finished, files still in the incomplete folder`;
+  else now = `Finished and moved to the save path`;
+  return `<b>Incomplete folder first</b> · <code>${esc(inc)}</code><br><span class="muted">${now}</span>`;
+}
 function ago(ts){ if(!ts||ts<0) return "–"; return new Date(ts*1000).toLocaleString(); }
 function toast(msg, bad){ const t=$("#toast"); t.textContent=msg; t.className="toast show"+(bad?" bad":""); clearTimeout(t._h); t._h=setTimeout(()=>t.className="toast",3000); }
 
@@ -881,8 +895,8 @@ function renderDetails(force){
       <dt>Ratio</dt><dd>${(+t.ratio).toFixed(3)}</dd>
       <dt>Seeds</dt><dd>${t.num_seeds} connected · ${t.num_complete<0?"?":t.num_complete} in swarm</dd>
       <dt>Peers</dt><dd>${t.num_leechs} connected · ${t.num_incomplete<0?"?":t.num_incomplete} in swarm</dd>
+      <dt>Download</dt><dd>${dlRoute(t)}</dd>
       <dt>Save path</dt><dd>${esc(t.save_path)}</dd>
-      ${t.download_path?`<dt>Incomplete</dt><dd>${esc(t.download_path)}</dd>`:""}
       ${t.category?`<dt>Category</dt><dd>${esc(t.category)}</dd>`:""}
       <dt>Added</dt><dd>${ago(t.added_on)}</dd>
       ${t.completion_on>0?`<dt>Completed</dt><dd>${ago(t.completion_on)}</dd>`:""}
