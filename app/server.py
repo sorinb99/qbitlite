@@ -13,6 +13,7 @@ three ways:
 Environment variables (QBIT_URL, QBIT_USERNAME, QBIT_PASSWORD, QBIT_AUTH_BYPASS)
 override the saved settings and disable the wizard.
 """
+import hashlib
 import http.client
 import ipaddress
 import json
@@ -372,6 +373,92 @@ def server_cookie():
     return server_sid() if s["mode"] == "credentials" else None
 
 
+# ---- .torrent reading (file list before adding)
+
+def bdecode(data):
+    """Decode bencode. Returns (value, info_span) where info_span is the byte
+    range of the top-level "info" dictionary, needed for the info hash."""
+    span = {}
+
+    def parse(i, depth, key=None):
+        c = data[i:i + 1]
+        if c == b"i":
+            j = data.index(b"e", i)
+            return int(data[i + 1:j]), j + 1
+        if c == b"l":
+            out, i = [], i + 1
+            while data[i:i + 1] != b"e":
+                v, i = parse(i, depth + 1)
+                out.append(v)
+            return out, i + 1
+        if c == b"d":
+            start, out, i = i, {}, i + 1
+            while data[i:i + 1] != b"e":
+                k, i = parse(i, depth + 1)
+                k = k.decode("utf-8", "replace") if isinstance(k, bytes) else str(k)
+                v_start = i
+                v, i = parse(i, depth + 1, k)
+                if depth == 0 and k == "info":
+                    span["info"] = (v_start, i)
+                out[k] = v
+            return out, i + 1
+        if c[:1].isdigit():
+            j = data.index(b":", i)
+            n = int(data[i:j])
+            if n < 0 or j + 1 + n > len(data):
+                raise ValueError("truncated")
+            return data[j + 1:j + 1 + n], j + 1 + n
+        raise ValueError("bad bencode")
+
+    value, _ = parse(0, 0)
+    return value, span.get("info")
+
+
+def txt(b):
+    return b.decode("utf-8", "replace") if isinstance(b, bytes) else str(b)
+
+
+def inspect_torrent(data):
+    """File list and torrent ID of a .torrent, in qBittorrent's file order
+    (pad files left out, as qBittorrent does)."""
+    meta, span = bdecode(data)
+    info = meta.get("info") if isinstance(meta, dict) else None
+    if not isinstance(info, dict) or not span:
+        raise ValueError("not a torrent file")
+    raw = data[span[0]:span[1]]
+    name = txt(info.get("name.utf-8") or info.get("name") or b"")
+    files = []
+    if "pieces" in info:                    # v1 or hybrid: qBittorrent's ID is the SHA-1
+        tid = hashlib.sha1(raw).hexdigest()
+        if "files" in info:
+            for f in info["files"]:
+                if b"p" in (f.get("attr") or b""):
+                    continue
+                parts = [txt(x) for x in (f.get("path.utf-8") or f.get("path") or [])]
+                files.append({"path": "/".join(parts), "size": int(f.get("length", 0))})
+        else:
+            files.append({"path": "", "size": int(info.get("length", 0))})
+    elif isinstance(info.get("file tree"), dict):   # v2 only: truncated SHA-256
+        tid = hashlib.sha256(raw).hexdigest()[:40]
+
+        def walk(node, parts):
+            for k in sorted(node):
+                v = node[k]
+                if k == "" and isinstance(v, dict):
+                    files.append({"path": "/".join(parts), "size": int(v.get("length", 0))})
+                elif isinstance(v, dict):
+                    walk(v, parts + [k])
+        walk(info["file tree"], [])
+        if len(files) == 1 and files[0]["path"] == name:
+            files[0]["path"] = ""
+    else:
+        raise ValueError("not a torrent file")
+    for i, f in enumerate(files):
+        f["index"] = i
+    return {"hash": tid, "name": name, "files": files,
+            "size": sum(f["size"] for f in files)}
+
+
 def auto_check():
     st = _auto["status"]
     cookie = server_cookie()
@@ -463,6 +550,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.automation(method)
         if path == "/lite/moves":
             return self.moves()
+        if path == "/lite/inspect" and method == "POST":
+            return self.inspect()
         if path.startswith("/api/v2/"):
             if not settings():
                 return self.send_json({"error": "not set up"}, 503)
@@ -470,6 +559,15 @@ class Handler(BaseHTTPRequestHandler):
         if method == "GET":
             return self.serve_static(path)
         return self.send_json({"error": "not found"}, 404)
+
+    def inspect(self):
+        n = int(self.headers.get("Content-Length") or 0)
+        if not 0 < n <= 50 * 1024 * 1024:
+            return self.send_json({"ok": False, "error": "File too large"}, 413)
+        try:
+            return self.send_json({"ok": True, **inspect_torrent(self.rfile.read(n))})
+        except (ValueError, IndexError, KeyError, TypeError, AttributeError, RecursionError):
+            return self.send_json({"ok": False, "error": "Not a valid .torrent file"})
 
     def config(self):
         s = settings()

@@ -7,6 +7,7 @@ A small, mobile-friendly web UI for [qBittorrent](https://www.qbittorrent.org/).
 - Live download and upload speeds, free disk space, and a toggle for qBittorrent's alternative speed limits (turtle mode).
 - Add `.torrent` files (pick them, or drag them from Finder/Explorer onto the page), with:
   - a folder browser for the save path: you tap your way down one level at a time, and the folders are listed through qBittorrent, so you see exactly what it sees; recent paths are one tap away;
+  - a file list before adding: walk through the torrent's folders, tick or untick whole folders, single files or file types (`.flac`, `.jpg`…), or search; handy for picking albums out of a discography. Unticked files are set to *Do not download*;
   - a choice per torrent: download to the incomplete folder first and move when done (for example to a fast SSD), or directly to the save path;
   - a category, and an option to add stopped.
 - Torrent details with peers: start, stop, reannounce, force recheck, remove, or delete with files.

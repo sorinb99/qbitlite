@@ -112,6 +112,7 @@ td.path{color:var(--muted);max-width:220px;overflow:hidden;text-overflow:ellipsi
 @media (max-width:640px){
   .ov{padding:0;align-items:flex-end}
   .sheet{width:100%;border-radius:18px 18px 0 0;max-height:92dvh}
+  .sheet.tall{height:92dvh}
 }
 .field{margin-bottom:16px}
 .field>label.l{display:block;font-weight:600;font-size:14px;margin-bottom:7px}
@@ -165,6 +166,39 @@ input:checked+.sw{background:var(--accent)}
 input:checked+.sw::after{left:18px}
 .drop{display:block;border:1.5px dashed var(--line);border-radius:12px;padding:14px;text-align:center;color:var(--muted);font-size:13.5px;cursor:pointer}
 .drop.has{border-color:var(--accent);color:var(--text)}
+.tcard{display:flex;align-items:center;gap:10px;justify-content:space-between;border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:8px;background:var(--bg)}
+.tcard .tn{min-width:0;display:flex;flex-direction:column;gap:2px;font-size:13px}
+.tcard .tn b{font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tcard .tn span{color:var(--muted)} .tcard .btn{flex:none;gap:4px} .tcard .btn .i{width:14px;height:14px}
+.muted{color:var(--muted)}
+.sheet.tall{height:min(90vh,920px)}
+.fbar{padding:10px 18px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+.fbar input{width:100%}
+.fsum{font-size:13px;color:var(--muted)} .fsum b{color:var(--text,#e8ebf1)}
+#filesBody{padding:0 0 calc(10px + var(--safe-b))}
+.fcrumbs{position:sticky;top:0;background:var(--panel);z-index:2;padding:10px 18px}
+.factions{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:10px 18px;border-bottom:1px solid var(--line);white-space:nowrap}
+.factions::-webkit-scrollbar{display:none}
+.factions .btn,.factions .pchip{flex:none}
+.pchip.ext{display:inline-flex;align-items:center;gap:5px} .pchip.ext b{font-weight:600;color:var(--muted)}
+.pchip.ext.on{border-color:var(--accent);color:var(--text,#e8ebf1)} .pchip.ext.off{opacity:.55;text-decoration:line-through}
+.frow{display:flex;align-items:stretch;border-bottom:1px solid var(--line)}
+.frow button{background:none;border:0;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.frow .fckb{flex:none;padding:0 6px 0 18px;margin:0;min-width:0;width:auto;height:auto;display:flex;align-items:center}
+.fmain{flex:1;min-width:0;display:flex;align-items:center;gap:12px;padding:11px 18px;min-height:56px}
+.frow.fdir .fmain{padding-left:6px}
+.fmain.file{padding-left:18px}
+.fic{width:20px;height:20px;color:var(--accent);flex:none} .frow.fup .fic{color:var(--muted)}
+.fn{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.fn b{font-weight:500;font-size:14.5px;word-break:break-word}
+.fn span{font-size:12.5px;color:var(--muted);word-break:break-word}
+.frow.off .fn b{color:var(--muted)}
+.chev{width:16px;height:16px;color:var(--muted);flex:none}
+.fck{width:24px;height:24px;border-radius:7px;border:2px solid var(--line);display:grid;place-items:center;flex:none;position:relative}
+.fck .i{width:15px;height:15px;color:#fff;display:none}
+.fck.on{background:var(--accent);border-color:var(--accent)} .fck.on .i{display:block}
+.fck.part{border-color:var(--accent)} .fck.part::after{content:"";width:11px;height:3px;border-radius:2px;background:var(--accent)}
+@media (hover:hover){ .fmain:hover,.fckb:hover{background:var(--panel2)} }
 .dropov{position:fixed;inset:0;z-index:95;display:none;place-items:center;background:#0d0f13cc;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);pointer-events:none}
 .dropov.show{display:grid}
 .draghint{font-size:12px}
@@ -270,6 +304,13 @@ details.adv input{margin-top:8px}
 
 <!-- add torrent -->
 <div class="dropov" id="dropOv"><div><svg class="i"><use href="#i-plus"/></svg><b>Drop .torrent files to add them</b></div></div>
+<div class="ov" id="filesOv" style="z-index:60" onclick="if(event.target===this)closeFiles()">
+  <div class="sheet tall">
+    <header><h2 id="fTitle"></h2><button class="btn sm" onclick="closeFiles()"><svg class="i"><use href="#i-check"/></svg>Done</button></header>
+    <div class="fbar"><input type="search" id="fSearch" placeholder="Search files" autocapitalize="off" autocorrect="off" spellcheck="false" oninput="FS.q=this.value.trim();renderFiles(true)"><div class="fsum" id="fSum"></div></div>
+    <div class="body" id="filesBody"></div>
+  </div>
+</div>
 <div class="ov" id="addOv" onclick="if(event.target===this)closeAdd()">
   <div class="sheet">
     <header><h2>Add torrent</h2><button class="iconbtn" onclick="closeAdd()"><svg class="i"><use href="#i-x"/></svg></button></header>
@@ -907,7 +948,7 @@ function renderDetails(force){
 }
 
 /* ============ add ============ */
-const add = { files:[], savepath:"", useInc:false, incpath:"", category:"", stopped:false };
+const add = { files:[], meta:[], savepath:"", useInc:false, incpath:"", category:"", stopped:false };
 function recentPaths(){
   const count={};
   for(const t of Object.values(S.torrents)) if(t.save_path) count[t.save_path]=(count[t.save_path]||0)+1;
@@ -918,7 +959,7 @@ function recentPaths(){
 }
 function openAdd(){
   const last = JSON.parse(localStorage.getItem("ql.add")||"{}");
-  add.files=[];
+  add.files=[]; add.meta=[];
   add.savepath = (last.savepath || S.prefs?.save_path || "").replace(/\/+$/,"");
   add.useInc = last.useInc ?? !!S.prefs?.temp_path_enabled;
   add.incpath = (last.incpath || S.prefs?.temp_path || "").replace(/\/+$/,"");
@@ -1009,7 +1050,8 @@ function renderAdd(){
   $("#addBody").innerHTML = `
     <div class="field"><label class="drop ${add.files.length?"has":""}"><input type="file" multiple onchange="pickFiles(this)">
       <svg class="i" style="width:26px;height:26px;margin-bottom:4px"><use href="#i-plus"/></svg><br>
-      ${add.files.length ? add.files.map(f=>esc(f.name)).join("<br>") : "Choose .torrent files<span class=\"draghint\"><br>or drag them onto the page</span>"}</label></div>
+      ${add.files.length ? (add.files.length>1?`${add.files.length} torrents · tap to change`:"Tap to change") : "Choose .torrent files<span class=\"draghint\"><br>or drag them onto the page</span>"}</label>
+      ${add.files.map((f,i)=>torrentCard(f,i)).join("")}</div>
     <div class="field"><label class="l">Save to</label>
       <div class="browser" id="br-savepath"></div>
       ${recentPaths().length?`<div class="hint" style="margin-top:10px">Recent</div><div class="chips" style="margin-top:6px">${recentPaths().map(p=>`<button type="button" class="pchip ${p===add.savepath?"on":""}" data-p="${esc(p)}" onclick="goDir('savepath','${jsq(p)}')">${esc(p)}</button>`).join("")}</div>`:""}</div>
@@ -1031,12 +1073,133 @@ function takeFiles(all){
   const ok=all.filter(f=>/\.torrent$/i.test(f.name));
   if(all.length && !ok.length) toast("That isn't a .torrent file", true);
   else if(ok.length<all.length) toast(`Skipped ${all.length-ok.length} file(s) that aren't .torrent`, true);
-  if(ok.length) add.files=ok;
-  const st=$("#addBody").scrollTop; renderAdd(); $("#addBody").scrollTop=st;
+  if(ok.length){ add.files=ok; add.meta=ok.map(()=>({loading:true})); readTorrents(); }
+  rerenderAdd();
+}
+function rerenderAdd(){ const b=$("#addBody"); if(!b) return; const st=b.scrollTop; renderAdd(); b.scrollTop=st; }
+
+/* ---------- file selection: read the .torrent on the server, pick files,
+   and after adding set the unticked ones to "do not download" ---------- */
+async function readTorrents(){
+  const files=add.files;
+  const metas = await Promise.all(files.map(async f=>{
+    try{
+      const r = await fetch("/lite/inspect",{method:"POST",headers:{"Content-Type":"application/x-bittorrent"},body:f}).then(r=>r.json());
+      if(!r.ok) return {error:r.error||"Can't read this file"};
+      r.sel = new Uint8Array(r.files.length).fill(1);
+      r.tree = buildTree(r);
+      return r;
+    }catch(e){ return {error:"Can't read this file"}; }
+  }));
+  if(add.files!==files) return;          // the user picked other files meanwhile
+  add.meta = metas; rerenderAdd();
+}
+function buildTree(m){
+  const mk=(name,parent)=>({name,parent,dirs:new Map(),files:[],all:[]});
+  const root=mk(m.name,null);
+  m.files.forEach((f,i)=>{
+    const parts=(f.path||m.name).split("/"); let n=root; root.all.push(i);
+    for(const p of parts.slice(0,-1)){ if(!n.dirs.has(p)) n.dirs.set(p,mk(p,n)); n=n.dirs.get(p); n.all.push(i); }
+    f.base=parts[parts.length-1];
+  });
+  m.files.forEach((f,i)=>{ let n=root; const parts=(f.path||m.name).split("/"); for(const p of parts.slice(0,-1)) n=n.dirs.get(p); n.files.push(i); });
+  return root;
+}
+const natural = (a,b)=>a.localeCompare(b,undefined,{numeric:true,sensitivity:"base"});
+function selStats(m, idx){
+  let n=0, b=0, tb=0;
+  for(const i of idx){ tb+=m.files[i].size; if(m.sel[i]){ n++; b+=m.files[i].size; } }
+  return {n, total:idx.length, bytes:b, totalBytes:tb, state: n===0?"off": n===idx.length?"on":"part"};
+}
+function torrentCard(f,i){
+  const m=add.meta[i]||{};
+  let line;
+  if(m.loading) line=`<span class="muted">Reading files…</span>`;
+  else if(m.error) line=`<span style="color:var(--bad)">${esc(m.error)}</span>`;
+  else {
+    const st=selStats(m, m.tree.all);
+    line = st.total===1 ? `1 file · ${size(st.totalBytes)}`
+      : st.n===st.total ? `All ${st.total} files · ${size(st.totalBytes)}`
+      : `<b style="color:var(--accent)">${st.n} of ${st.total} files</b> · ${size(st.bytes)} of ${size(st.totalBytes)}`;
+  }
+  const many = m.files && m.files.length>1;
+  return `<div class="tcard"><div class="tn"><b>${esc(m.name||f.name)}</b><span>${line}</span></div>
+    ${many?`<button type="button" class="btn sm ghost" onclick="openFiles(${i})">Choose files<svg class="i"><use href="#i-chev"/></svg></button>`:""}</div>`;
+}
+
+const FS = { t:0, node:null, q:"", items:[] };
+function openFiles(i){
+  FS.t=i; FS.node=add.meta[i].tree; FS.q=""; $("#fSearch").value="";
+  $("#filesOv").classList.add("show"); renderFiles();
+}
+function closeFiles(){ $("#filesOv").classList.remove("show"); rerenderAdd(); }
+function filesDir(k){ FS.node = k===-1 ? FS.node.parent : FS.items[k].node; FS.q=""; $("#fSearch").value=""; renderFiles(true); }
+function filesCrumb(depth){ let n=FS.node, path=[]; while(n){ path.unshift(n); n=n.parent; } FS.node=path[depth]; renderFiles(true); }
+function setSel(idx, on){ const m=add.meta[FS.t]; for(const i of idx) m.sel[i]=on?1:0; renderFiles(); }
+function toggleItem(k){
+  const it=FS.items[k], m=add.meta[FS.t];
+  if(it.node){ const st=selStats(m,it.node.all); setSel(it.node.all, st.state!=="on"); }
+  else setSel([it.i], !m.sel[it.i]);
+}
+function scopeIdx(){
+  const m=add.meta[FS.t];
+  if(!FS.q) return FS.node.all;
+  const q=FS.q.toLowerCase();
+  return FS.node.all.filter(i=>(m.files[i].path||m.name).toLowerCase().includes(q));
+}
+function extOf(name){ const d=name.lastIndexOf("."); return d>0 && name.length-d<=6 ? name.slice(d+1).toLowerCase() : ""; }
+function toggleExt(ext){
+  const m=add.meta[FS.t], idx=scopeIdx().filter(i=>extOf(m.files[i].base)===ext);
+  setSel(idx, selStats(m,idx).state!=="on");
+}
+function renderFiles(top){
+  const m=add.meta[FS.t], body=$("#filesBody"); if(!m||!m.tree) return;
+  const all=selStats(m,m.tree.all);
+  $("#fTitle").textContent=m.name;
+  $("#fSum").innerHTML=`<b>${all.n} of ${all.total}</b> files · <b>${size(all.bytes)}</b> of ${size(all.totalBytes)}`;
+  const scope=scopeIdx(), ss=selStats(m,scope);
+  // types in scope, most common first
+  const ext={}; for(const i of scope){ const e=extOf(m.files[i].base); if(e) (ext[e]=ext[e]||[]).push(i); }
+  const exts=Object.entries(ext).sort((a,b)=>b[1].length-a[1].length).slice(0,8);
+  let crumbs="";
+  if(!FS.q){ const path=[]; let n=FS.node; while(n){ path.unshift(n); n=n.parent; }
+    if(path.length>1) crumbs=`<div class="crumbs fcrumbs">${path.map((n,d)=>`${d?'<span class="sep">›</span>':""}<button type="button" onclick="filesCrumb(${d})">${d?esc(n.name):"All files"}</button>`).join("")}</div>`; }
+  FS.items=[];
+  if(FS.q){ for(const i of scope.slice(0,400)) FS.items.push({i, sub:(m.files[i].path||"").split("/").slice(0,-1).join(" / ")}); }
+  else {
+    for(const d of [...FS.node.dirs.values()].sort((a,b)=>natural(a.name,b.name))) FS.items.push({node:d});
+    for(const i of [...FS.node.files].sort((a,b)=>natural(m.files[a].base,m.files[b].base))) FS.items.push({i});
+  }
+  const ck = st => `<span class="fck ${st}"><svg class="i"><use href="#i-check"/></svg></span>`;
+  const rows = FS.items.map((it,k)=>{
+    if(it.node){ const st=selStats(m,it.node.all);
+      return `<div class="frow fdir ${st.state}"><button type="button" class="fckb" onclick="toggleItem(${k})" aria-label="Select folder">${ck(st.state)}</button>
+        <button type="button" class="fmain" onclick="filesDir(${k})"><svg class="i fic"><use href="#i-folder"/></svg>
+        <span class="fn"><b>${esc(it.node.name)}</b><span>${st.n===st.total?`${st.total} file${st.total>1?"s":""}`:`${st.n} of ${st.total} files`} · ${size(st.n===st.total?st.totalBytes:st.bytes)}</span></span>
+        <svg class="i chev"><use href="#i-chev"/></svg></button></div>`; }
+    const f=m.files[it.i], on=m.sel[it.i]?"on":"off";
+    return `<div class="frow ${on}"><button type="button" class="fmain file" onclick="toggleItem(${k})">${ck(on)}
+      <span class="fn"><b>${esc(f.base)}</b><span>${it.sub?esc(it.sub)+" · ":""}${size(f.size)}</span></span></button></div>`;
+  }).join("");
+  body.innerHTML = `${crumbs}
+    <div class="factions">
+      <button type="button" class="btn sm ${ss.state==="on"?"":"ghost"}" onclick="setSel(scopeIdx(),true)">Select all${FS.q?" found":FS.node.parent?" here":""}</button>
+      <button type="button" class="btn sm ${ss.state==="off"?"":"ghost"}" onclick="setSel(scopeIdx(),false)">Select none</button>
+      ${exts.length>1?exts.map(([e,idx])=>`<button type="button" class="pchip ext ${selStats(m,idx).state}" onclick="toggleExt('${jsq(e)}')">.${esc(e)} <b>${idx.length}</b></button>`).join(""):""}
+    </div>
+    ${FS.node.parent&&!FS.q?`<div class="frow fup"><button type="button" class="fmain" onclick="filesDir(-1)"><svg class="i fic"><use href="#i-back"/></svg><span class="fn"><b>Back</b><span>${esc(FS.node.parent.parent?FS.node.parent.name:"All files")}</span></span></button></div>`:""}
+    ${rows || `<div class="empty" style="padding:30px 0">No files match.</div>`}
+    ${FS.q&&scope.length>400?`<div class="hint" style="padding:10px 4px">Showing 400 of ${scope.length}. Refine the search, or use Select all.</div>`:""}`;
+  if(top) body.scrollTop=0;
 }
 async function submitAdd(){
   if(!add.files.length) return toast("Choose a .torrent file", true);
+  if(add.meta.some(m=>m.loading)) return toast("Still reading the torrent files…", true);
+  const empty = add.meta.find(m=>m.sel && !m.sel.some(v=>v));
+  if(empty) return toast(`No files selected in ${empty.name}`, true);
   const save=curDir("savepath"), inc=curDir("incpath");
+  const partial = add.meta.some(m=>m.sel && m.sel.some(v=>!v));
+  if(partial) return submitEach(save, inc);
   const fd = new FormData();
   for(const f of add.files) fd.append("torrents", f, f.name);
   fd.append("savepath", save);
@@ -1054,6 +1217,55 @@ async function submitAdd(){
     localStorage.setItem("ql.add", JSON.stringify({savepath:save, useInc:add.useInc, incpath:inc, category:add.category, stopped:add.stopped}));
     const n = add.files.length;
     toast(`Added ${n} torrent${n>1?"s":""}`); closeAdd(); S.rid=0; poll();
+  }catch(e){ if(e instanceof AuthError) return renderLogin("Your session expired. Please sign in again."); toast(e.message,true); }
+  $("#addGo").disabled=false;
+}
+
+function addForm(file, save, inc, stopped){
+  const fd = new FormData();
+  fd.append("torrents", file, file.name);
+  fd.append("savepath", save);
+  fd.append("autoTMM","false");
+  if(add.useInc){ fd.append("useDownloadPath","true"); fd.append("downloadPath", inc); }
+  else fd.append("useDownloadPath","false");
+  if(add.category) fd.append("category", add.category);
+  fd.append("stopped", stopped?"true":"false"); fd.append("paused", stopped?"true":"false");
+  return fd;
+}
+const rejected = r => String(r).trim()==="Fails." || (r && r.failure_count>0 && !r.success_count && !r.pending_count);
+/* With some files unticked: add each torrent stopped, wait until qBittorrent
+   lists its files, set the unticked ones to "do not download", then start it. */
+async function submitEach(save, inc){
+  $("#addGo").disabled=true;
+  const problems=[]; let added=0;
+  try{
+    for(let i=0;i<add.files.length;i++){
+      const f=add.files[i], m=add.meta[i], name=m.name||f.name;
+      const pick = m.sel && m.sel.some(v=>!v);
+      if(pick){
+        const have = await q("torrents/info?hashes="+m.hash);
+        if(have.length){ problems.push(`${name}: already in qBittorrent`); continue; }
+      }
+      const r = await q("torrents/add", {method:"POST", body:addForm(f, save, inc, pick || add.stopped)});
+      if(rejected(r)){ problems.push(`${name}: rejected (invalid or already added)`); continue; }
+      added++;
+      if(!pick) continue;
+      let files=null;
+      for(let k=0;k<40;k++){
+        files = await q("torrents/files?hash="+m.hash).catch(()=>null);
+        if(files && files.length) break;
+        await new Promise(r=>setTimeout(r,500));
+      }
+      if(!files || files.length!==m.files.length){ problems.push(`${name}: couldn't apply the file selection, left stopped`); continue; }
+      const off=[]; m.sel.forEach((v,idx)=>{ if(!v) off.push(idx); });
+      for(let k=0;k<off.length;k+=500)
+        await q("torrents/filePrio", form({hash:m.hash, id:off.slice(k,k+500).join("|"), priority:0}));
+      if(!add.stopped) await q("torrents/"+(v5()?"start":"resume"), form({hashes:m.hash}));
+    }
+    localStorage.setItem("ql.add", JSON.stringify({savepath:save, useInc:add.useInc, incpath:inc, category:add.category, stopped:add.stopped}));
+    if(problems.length) toast(problems.join(" · "), true);
+    else toast(`Added ${added} torrent${added>1?"s":""}`);
+    if(added){ closeAdd(); S.rid=0; poll(); }
   }catch(e){ if(e instanceof AuthError) return renderLogin("Your session expired. Please sign in again."); toast(e.message,true); }
   $("#addGo").disabled=false;
 }
