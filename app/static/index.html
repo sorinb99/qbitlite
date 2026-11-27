@@ -165,6 +165,12 @@ input:checked+.sw{background:var(--accent)}
 input:checked+.sw::after{left:18px}
 .drop{display:block;border:1.5px dashed var(--line);border-radius:12px;padding:14px;text-align:center;color:var(--muted);font-size:13.5px;cursor:pointer}
 .drop.has{border-color:var(--accent);color:var(--text)}
+.dropov{position:fixed;inset:0;z-index:95;display:none;place-items:center;background:#0d0f13cc;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);pointer-events:none}
+.dropov.show{display:grid}
+.draghint{font-size:12px}
+@media (hover:none){.draghint{display:none}}
+.dropov>div{display:flex;flex-direction:column;align-items:center;gap:12px;padding:40px 56px;border:2px dashed var(--accent);border-radius:20px;background:#2fa4ff12;color:var(--text,#e8ebf1);font-size:16px}
+.dropov .i{width:34px;height:34px;color:var(--accent)}
 .drop{position:relative}
 .drop input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
 .kv{display:grid;grid-template-columns:auto 1fr;gap:7px 16px;font-size:13.5px;font-variant-numeric:tabular-nums}
@@ -219,6 +225,7 @@ input:checked+.sw::after{left:18px}
 .opt input{margin:3px 0 0;accent-color:var(--accent);width:17px;height:17px;flex:none}
 .opt b{display:block;font-size:14.5px}
 .opt span{display:block;color:var(--muted);font-size:13px;margin-top:2px}
+.opt code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:var(--text,#e8ebf1)}
 .opt .tag{display:inline-block;font-size:10.5px;font-weight:700;color:var(--up);background:#3ecf8e1f;border-radius:10px;padding:1px 7px;margin-left:6px;vertical-align:1px}
 .ok{display:flex;gap:10px;align-items:center;background:#3ecf8e14;border:1px solid #3ecf8e40;color:var(--up);border-radius:12px;padding:10px 12px;font-size:13.5px;margin-bottom:16px}
 .errbox{background:#ff6b6b14;border:1px solid #ff6b6b40;color:#ffb0b0;border-radius:12px;padding:10px 12px;font-size:13.5px;margin-top:14px;line-height:1.5}
@@ -261,6 +268,7 @@ details.adv input{margin-top:8px}
 <div id="app"></div>
 
 <!-- add torrent -->
+<div class="dropov" id="dropOv"><div><svg class="i"><use href="#i-plus"/></svg><b>Drop .torrent files to add them</b></div></div>
 <div class="ov" id="addOv" onclick="if(event.target===this)closeAdd()">
   <div class="sheet">
     <header><h2>Add torrent</h2><button class="iconbtn" onclick="closeAdd()"><svg class="i"><use href="#i-x"/></svg></button></header>
@@ -908,6 +916,26 @@ function openAdd(){
 }
 function closeAdd(){ $("#addOv").classList.remove("show"); }
 
+/* Drag .torrent files from Finder/Explorer anywhere onto the page to add them. */
+(()=>{
+  let depth=0;
+  const isFiles = e => [...(e.dataTransfer?.types||[])].includes("Files");
+  const ready = () => !!$(".top");          // main UI only, not setup/login
+  const show = on => $("#dropOv").classList.toggle("show", on);
+  addEventListener("dragenter", e=>{ if(!isFiles(e)||!ready()) return; e.preventDefault(); depth++; show(true); });
+  addEventListener("dragover", e=>{ if(!isFiles(e)||!ready()) return; e.preventDefault(); e.dataTransfer.dropEffect="copy"; });
+  addEventListener("dragleave", e=>{ if(!isFiles(e)) return; if(--depth<=0){ depth=0; show(false); } });
+  addEventListener("drop", e=>{
+    if(!isFiles(e)) return;
+    e.preventDefault(); depth=0; show(false);
+    if(!ready()) return;
+    const files=[...e.dataTransfer.files];
+    if(!files.some(f=>/\.torrent$/i.test(f.name))) return toast("That isn't a .torrent file", true);
+    if(!$("#addOv").classList.contains("show")) openAdd();
+    takeFiles(files);
+  });
+})();
+
 /* ---------- folder browser: drill down one level at a time (lists folders through
    qBittorrent, so paths are exactly what qBittorrent sees) ---------- */
 const dirs = { cache:{} };
@@ -967,13 +995,14 @@ function renderAdd(){
   $("#addBody").innerHTML = `
     <div class="field"><label class="drop ${add.files.length?"has":""}"><input type="file" multiple onchange="pickFiles(this)">
       <svg class="i" style="width:26px;height:26px;margin-bottom:4px"><use href="#i-plus"/></svg><br>
-      ${add.files.length ? add.files.map(f=>esc(f.name)).join("<br>") : "Choose .torrent files"}</label></div>
+      ${add.files.length ? add.files.map(f=>esc(f.name)).join("<br>") : "Choose .torrent files<span class=\"draghint\"><br>or drag them onto the page</span>"}</label></div>
     <div class="field"><label class="l">Save to</label>
       <div class="browser" id="br-savepath"></div>
       ${recentPaths().length?`<div class="hint" style="margin-top:10px">Recent</div><div class="chips" style="margin-top:6px">${recentPaths().map(p=>`<button type="button" class="pchip ${p===add.savepath?"on":""}" data-p="${esc(p)}" onclick="goDir('savepath','${jsq(p)}')">${esc(p)}</button>`).join("")}</div>`:""}</div>
-    <div class="field rowtoggle"><div><label class="l" style="margin:0">Use incomplete folder</label><div class="hint" style="margin-top:2px">Download here first, move to “Save to” when done.</div></div>
-      <label class="toggle"><input type="checkbox" ${add.useInc?"checked":""} onchange="add.useInc=this.checked;renderAdd()"><span class="sw"></span></label></div>
-    ${add.useInc?`<div class="field"><div class="browser" id="br-incpath"></div></div>`:""}
+    <div class="field"><label class="l">Download</label>
+      <label class="opt ${add.useInc?"on":""}"><input type="radio" name="dlto" ${add.useInc?"checked":""} onchange="setUseInc(true)"><div><b>To the incomplete folder first</b><span>${add.incpath?`<code>${esc(curDir("incpath")||add.incpath)}</code> · `:""}moved to “Save to” when finished</span></div></label>
+      <label class="opt ${add.useInc?"":"on"}"><input type="radio" name="dlto" ${add.useInc?"":"checked"} onchange="setUseInc(false)"><div><b>Directly to “Save to”</b><span>No move at the end</span></div></label>
+      ${add.useInc?`<div class="browser" id="br-incpath"></div>`:""}</div>
     ${cats.length?`<div class="field"><label class="l">Category</label><select onchange="add.category=this.value"><option value="">None</option>${cats.map(c=>`<option ${c===add.category?"selected":""}>${esc(c)}</option>`).join("")}</select></div>`:""}
     <div class="field rowtoggle"><label class="l" style="margin:0">Add stopped</label>
       <label class="toggle"><input type="checkbox" ${add.stopped?"checked":""} onchange="add.stopped=this.checked"><span class="sw"></span></label></div>`;
@@ -982,8 +1011,10 @@ function renderAdd(){
 /* No "accept" filter on the input: iOS greys out .torrent files (no system type for
    them) and Android pickers hide them (they come as application/octet-stream).
    Check the files here instead. */
-function pickFiles(inp){
-  const all=[...inp.files], ok=all.filter(f=>/\.torrent$/i.test(f.name));
+function setUseInc(on){ add.useInc=on; const st=$("#addBody").scrollTop; renderAdd(); $("#addBody").scrollTop=st; }
+function pickFiles(inp){ takeFiles([...inp.files]); }
+function takeFiles(all){
+  const ok=all.filter(f=>/\.torrent$/i.test(f.name));
   if(all.length && !ok.length) toast("That isn't a .torrent file", true);
   else if(ok.length<all.length) toast(`Skipped ${all.length-ok.length} file(s) that aren't .torrent`, true);
   if(ok.length) add.files=ok;

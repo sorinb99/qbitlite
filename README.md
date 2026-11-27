@@ -5,9 +5,9 @@ A small, mobile-friendly web UI for [qBittorrent](https://www.qbittorrent.org/).
 - Torrent list: cards on phones, a sortable table on desktop.
 - Filters (All / Downloading / Seeding / Stopped / Completed / Active / Errors), search and sorting.
 - Live download and upload speeds, free disk space, and a toggle for qBittorrent's alternative speed limits (turtle mode).
-- Add `.torrent` files, with:
+- Add `.torrent` files (pick them, or drag them from Finder/Explorer onto the page), with:
   - a folder browser for the save path: you tap your way down one level at a time, and the folders are listed through qBittorrent, so you see exactly what it sees; recent paths are one tap away;
-  - an optional incomplete folder (download there first, move when done);
+  - a choice per torrent: download to the incomplete folder first and move when done (for example to a fast SSD), or directly to the save path;
   - a category, and an option to add stopped.
 - Torrent details with peers: start, stop, reannounce, force recheck, remove, or delete with files.
 - Live move progress: when a finished torrent is moved from the incomplete folder to its save path, it shows **Moving NN%**, with the amount copied, speed and time left (optional, see below).
